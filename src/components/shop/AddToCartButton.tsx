@@ -26,6 +26,28 @@ interface AddToCartButtonProps {
 const formatPrice = (n: number) =>
   new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
 
+const COLOR_MAP: Record<string, string> = {
+  negro: '#1C1C1C', blanco: '#F5F5F0', crema: '#F0EBE1', beige: '#D4C5A9',
+  marfil: '#FFFFF0', gris: '#9E9E9E', 'gris claro': '#D0D0D0', 'gris oscuro': '#555555',
+  rojo: '#C0392B', bordo: '#7B2D42', vino: '#6B2737', rosa: '#E8A0B0',
+  coral: '#E8714A', naranja: '#E8813A', mostaza: '#C8A84B', amarillo: '#F0CC4A',
+  azul: '#3A7BC8', 'azul marino': '#1B3A6B', 'azul claro': '#7EB8E0', celeste: '#87CEEB',
+  verde: '#4A9B6F', 'verde oscuro': '#2D6A4F', esmeralda: '#2E8B6E', turquesa: '#3AADA8',
+  lila: '#B09BC8', violeta: '#8E44AD', morado: '#6C3483',
+  camel: '#C19A6B', tabaco: '#8B6355', chocolate: '#5C3A1E', tiza: '#E8E4DC',
+}
+
+function getColorHex(name: string): string {
+  return COLOR_MAP[name.toLowerCase().trim()] ?? '#CCCCCC'
+}
+
+function isLight(hex: string): boolean {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return (r * 299 + g * 587 + b * 114) / 1000 > 180
+}
+
 export default function AddToCartButton({ product, sizes, colors }: AddToCartButtonProps) {
   const { addItem } = useCart()
   const [selectedSize, setSelectedSize] = useState<string | null>(sizes[0] ?? null)
@@ -33,7 +55,6 @@ export default function AddToCartButton({ product, sizes, colors }: AddToCartBut
   const [quantity, setQuantity] = useState(1)
   const [added, setAdded] = useState(false)
 
-  // Encontrar la variante que coincide con talle + color seleccionados
   const selectedVariant = product.variants.find(v => {
     const sizeMatch = sizes.length === 0 || v.size === selectedSize
     const colorMatch = colors.length === 0 || v.color === selectedColor
@@ -44,18 +65,15 @@ export default function AddToCartButton({ product, sizes, colors }: AddToCartBut
   const wholesalePrice = selectedVariant?.price_rules?.find(p => p.type === 'wholesale' && p.active)
   const inStock = (selectedVariant?.stock ?? 0) > 0
 
-  // Precio según cantidad
   const effectivePrice = wholesalePrice && quantity >= wholesalePrice.min_qty
     ? wholesalePrice.price
     : (retailPrice ?? 0)
 
   const priceType: 'retail' | 'wholesale' = wholesalePrice && quantity >= wholesalePrice.min_qty
-    ? 'wholesale'
-    : 'retail'
+    ? 'wholesale' : 'retail'
 
   function handleAddToCart() {
     if (!selectedVariant || !effectivePrice) return
-
     addItem({
       variantId: selectedVariant.id,
       productId: product.id,
@@ -68,7 +86,6 @@ export default function AddToCartButton({ product, sizes, colors }: AddToCartBut
       imageUrl: product.coverUrl,
       quantity,
     })
-
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
   }
@@ -76,7 +93,50 @@ export default function AddToCartButton({ product, sizes, colors }: AddToCartBut
   return (
     <div className="space-y-6">
 
-      {/* Selector de talle */}
+      {/* Selector de COLOR — círculos */}
+      {colors.length > 0 && (
+        <div>
+          <p className="text-xs tracking-[0.15em] uppercase text-[var(--color-stone)] mb-3">
+            Color:{' '}
+            <span className="normal-case font-light text-[var(--color-charcoal)]">
+              {selectedColor}
+            </span>
+          </p>
+          <div className="flex gap-2.5 flex-wrap">
+            {colors.map(color => {
+              const hex = getColorHex(color)
+              const light = isLight(hex)
+              const selected = selectedColor === color
+              return (
+                <button
+                  key={color}
+                  onClick={() => setSelectedColor(color)}
+                  title={color}
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    backgroundColor: hex,
+                    border: selected
+                      ? '2px solid var(--color-charcoal)'
+                      : light
+                      ? '1px solid #D0CBC3'
+                      : '1px solid transparent',
+                    outline: selected ? '2px solid white' : 'none',
+                    outlineOffset: -4,
+                    cursor: 'pointer',
+                    transition: 'transform 0.15s',
+                    transform: selected ? 'scale(1.15)' : 'scale(1)',
+                    flexShrink: 0,
+                  }}
+                />
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Selector de TALLE — pills */}
       {sizes.length > 0 && (
         <div>
           <p className="text-xs tracking-[0.15em] uppercase text-[var(--color-stone)] mb-3">
@@ -87,37 +147,13 @@ export default function AddToCartButton({ product, sizes, colors }: AddToCartBut
               <button
                 key={size}
                 onClick={() => setSelectedSize(size)}
-                className={`w-12 h-12 text-sm font-light border transition-colors ${
+                className={`h-9 px-3 text-xs font-light border transition-colors rounded-sm ${
                   selectedSize === size
                     ? 'border-[var(--color-charcoal)] bg-[var(--color-charcoal)] text-white'
                     : 'border-[var(--color-border)] text-[var(--color-charcoal)] hover:border-[var(--color-charcoal)]'
                 }`}
               >
                 {size}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Selector de color */}
-      {colors.length > 0 && (
-        <div>
-          <p className="text-xs tracking-[0.15em] uppercase text-[var(--color-stone)] mb-3">
-            Color: <span className="normal-case font-light">{selectedColor}</span>
-          </p>
-          <div className="flex gap-2 flex-wrap">
-            {colors.map(color => (
-              <button
-                key={color}
-                onClick={() => setSelectedColor(color)}
-                className={`px-4 py-2 text-xs font-light border transition-colors ${
-                  selectedColor === color
-                    ? 'border-[var(--color-charcoal)] bg-[var(--color-charcoal)] text-white'
-                    : 'border-[var(--color-border)] text-[var(--color-charcoal)] hover:border-[var(--color-charcoal)]'
-                }`}
-              >
-                {color}
               </button>
             ))}
           </div>
@@ -144,14 +180,14 @@ export default function AddToCartButton({ product, sizes, colors }: AddToCartBut
         </div>
       </div>
 
-      {/* Precio efectivo si cambia por mayorista */}
+      {/* Banner precio mayorista */}
       {wholesalePrice && quantity >= wholesalePrice.min_qty && (
         <div className="bg-[#F2EEE9] px-4 py-3 text-sm text-[var(--color-charcoal)]">
           Precio mayorista aplicado: <strong>{formatPrice(wholesalePrice.price)}</strong> por unidad
         </div>
       )}
 
-      {/* Stock */}
+      {/* Sin stock */}
       {selectedVariant && !inStock && (
         <p className="text-xs text-red-400 tracking-wide">Sin stock disponible</p>
       )}

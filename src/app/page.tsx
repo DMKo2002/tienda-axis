@@ -99,6 +99,9 @@ export default async function HomePage() {
               const retailPrice = product.variants?.[0]?.price_rules?.find((p: any) => p.type === 'retail' && p.active)?.price
               const wholesalePrice = product.variants?.[0]?.price_rules?.find((p: any) => p.type === 'wholesale' && p.active)?.price
 
+              const colors = [...new Set((product.variants ?? []).map((v: any) => v.color).filter(Boolean))] as string[]
+              const sizes = [...new Set((product.variants ?? []).map((v: any) => v.size).filter(Boolean))] as string[]
+
               return (
                 <ProductCard
                   key={product.id}
@@ -108,6 +111,8 @@ export default async function HomePage() {
                   coverUrl={cover?.url}
                   retailPrice={retailPrice}
                   wholesalePrice={wholesalePrice}
+                  colors={colors}
+                  sizes={sizes}
                   index={i}
                 />
               )
