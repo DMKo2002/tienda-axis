@@ -159,7 +159,7 @@ export default function CheckoutPage() {
 
       clearCart()
       // Redirigir al checkout de MP
-      window.location.href = data.sandbox_init_point ?? data.init_point
+      window.location.href = data.init_point ?? data.sandbox_init_point
 
     } catch (err: any) {
       setError(err.message ?? 'Error al iniciar el pago')
