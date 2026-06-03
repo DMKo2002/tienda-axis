@@ -139,7 +139,11 @@ export default function CheckoutPage() {
   }
 
   // <-- CAMBIO: usar alias solo como texto, que es el formato que leen todas las billeteras
-  const qrValue = storeConfig?.transfer_alias ?? storeConfig?.transfer_cbu ?? ''
+  const qrValue = storeConfig?.transfer_alias
+  ? `https://mpago.la/transfer?alias=${storeConfig.transfer_alias}`
+  : storeConfig?.transfer_cbu
+  ? `https://mpago.la/transfer?cvu=${storeConfig.transfer_cbu}`
+  : ''
 
   if (items.length === 0 && step !== 'qr') {
     return (
