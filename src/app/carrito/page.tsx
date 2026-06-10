@@ -5,12 +5,30 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import Link from 'next/link'
 import { Trash2, ArrowLeft, ImageOff } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { createClient, TENANT_ID } from '@/lib/supabase'
 
 const formatPrice = (n: number) =>
   new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
 
 export default function CarritoPage() {
   const { items, total, removeItem, updateQuantity, count } = useCart()
+  const [minOrder, setMinOrder] = useState<number | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase
+      .from('store_config')
+      .select('min_order_amount')
+      .eq('tenant_id', TENANT_ID)
+      .single()
+      .then(({ data }) => setMinOrder(data?.min_order_amount ?? null))
+  }, [])
+
+  const hasMin = (minOrder ?? 0) > 0
+  const meetsMin = !hasMin || total >= minOrder!
+  const remaining = hasMin ? Math.max(0, minOrder! - total) : 0
+  const progress = hasMin ? Math.min(100, (total / minOrder!) * 100) : 100
 
   return (
     <>
@@ -128,7 +146,7 @@ export default function CarritoPage() {
                     ))}
                   </div>
 
-                  <div className="border-t border-[var(--color-border)] pt-4 mb-6">
+                  <div className="border-t border-[var(--color-border)] pt-4 mb-4">
                     <div className="flex justify-between items-center">
                       <span className="text-xs tracking-[0.15em] uppercase text-[var(--color-charcoal)]">Total</span>
                       <span className="font-display text-2xl font-light text-[var(--color-charcoal)]">
@@ -138,12 +156,41 @@ export default function CarritoPage() {
                     <p className="text-xs text-[var(--color-stone)] mt-1">Envío calculado al finalizar</p>
                   </div>
 
-                  <Link
-                    href="/checkout"
-                    className="block w-full py-4 bg-[var(--color-charcoal)] text-white text-xs tracking-[0.2em] uppercase text-center hover:bg-[var(--color-stone)] transition-colors"
-                  >
-                    Finalizar compra
-                  </Link>
+                  {/* Barra de progreso hacia el mínimo */}
+                  {hasMin && (
+                    <div className="mb-5">
+                      <div className="w-full h-0.5 bg-[var(--color-border)] rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[var(--color-charcoal)] transition-all duration-500"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-[var(--color-stone)] mt-2">
+                        {meetsMin
+                          ? '✓ Pedido mínimo alcanzado'
+                          : `Agregá ${formatPrice(remaining)} más para continuar`
+                        }
+                      </p>
+                    </div>
+                  )}
+
+                  {meetsMin ? (
+                    <Link
+                      href="/checkout"
+                      className="block w-full py-4 bg-[var(--color-charcoal)] text-white text-xs tracking-[0.2em] uppercase text-center hover:bg-[var(--color-stone)] transition-colors"
+                    >
+                      Finalizar compra
+                    </Link>
+                  ) : (
+                    <div>
+                      <div className="w-full py-4 bg-[var(--color-border)] text-[var(--color-stone)] text-xs tracking-[0.2em] uppercase text-center cursor-not-allowed">
+                        Finalizar compra
+                      </div>
+                      <p className="text-[10px] text-[var(--color-stone)] text-center mt-2">
+                        Mínimo de compra: {formatPrice(minOrder!)}
+                      </p>
+                    </div>
+                  )}
 
                   <Link
                     href="/tienda"

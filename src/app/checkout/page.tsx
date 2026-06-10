@@ -42,7 +42,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     supabase.from('store_config')
-      .select('mp_enabled, transfer_enabled, transfer_cbu, transfer_alias, oca_enabled, andreani_enabled, pickup_enabled, whatsapp_number')
+      .select('mp_enabled, transfer_enabled, transfer_cbu, transfer_alias, oca_enabled, andreani_enabled, pickup_enabled, whatsapp_number, min_order_amount')
       .eq('tenant_id', TENANT_ID)
       .single()
       .then(({ data }) => setStoreConfig(data))
@@ -103,7 +103,15 @@ export default function CheckoutPage() {
 
   const totalConEnvio = total + shippingCost
 
+  const minOrder: number | null = storeConfig?.min_order_amount ?? null
+  const meetsMin = !minOrder || total >= minOrder
+
   async function handleContinuar() {
+    if (!meetsMin) {
+      const falta = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(minOrder! - total)
+      setError(`El pedido mínimo es de ${new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(minOrder!)}. Te faltan ${falta}.`)
+      return
+    }
     if (!fullName.trim()) { setError('El nombre es obligatorio'); return }
     if (!email.trim()) { setError('El email es obligatorio'); return }
     if (shippingMethod === 'andreani' && !addressZip.match(/^\d{4}$/)) {
@@ -454,8 +462,8 @@ export default function CheckoutPage() {
 
                   <button
                     onClick={handleContinuar}
-                    disabled={cotizandoFlete}
-                    className="w-full py-4 bg-[var(--color-charcoal)] text-white text-xs tracking-[0.2em] uppercase hover:bg-[var(--color-stone)] transition-colors disabled:opacity-60"
+                    disabled={cotizandoFlete || !meetsMin}
+                    className="w-full py-4 bg-[var(--color-charcoal)] text-white text-xs tracking-[0.2em] uppercase hover:bg-[var(--color-stone)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {cotizandoFlete ? 'Calculando flete...' : 'Continuar →'}
                   </button>
