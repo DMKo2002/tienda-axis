@@ -105,18 +105,25 @@ export async function POST(req: NextRequest) {
     if (orderError) throw orderError
 
     // Crear los items del pedido
-    await supabase.from('order_items').insert(
-      items.map((item: any) => ({
-        order_id: order.id,
-        variant_id: item.variantId,
-        product_name: item.productName,
-        variant_desc: item.variantDesc,
-        quantity: item.quantity,
-        unit_price: item.price,
-        price_type: item.priceType ?? 'retail',
-        subtotal: item.price * item.quantity,
-      }))
-    )
+    if (items.length > 0) {
+      const { error: itemsError } = await supabase.from('order_items').insert(
+        items.map((item: any) => ({
+          order_id: order.id,
+          variant_id: item.variantId ?? null,
+          product_name: String(item.productName ?? 'Producto'),
+          variant_desc: item.variantDesc ?? null,
+          quantity: Number(item.quantity) || 1,
+          unit_price: Number(item.price) || 0,
+          price_type: item.priceType ?? 'retail',
+          subtotal: (Number(item.price) || 0) * (Number(item.quantity) || 1),
+        }))
+      )
+      if (itemsError) {
+        console.error('Error insertando order_items:', itemsError)
+        // Devolvemos el pedido de todas formas pero advertimos
+        return NextResponse.json({ ok: true, order, warning: 'Items no guardados: ' + itemsError.message })
+      }
+    }
 
     return NextResponse.json({ ok: true, order })
 
