@@ -126,44 +126,34 @@ export default function CheckoutPage() {
     setLoading(true)
     setError(null)
     try {
-      let customerId: string | null = null
-      const { data: existingCustomer } = await supabase
-        .from('customers').select('id')
-        .eq('tenant_id', TENANT_ID).eq('email', email.trim()).single()
-
-      if (existingCustomer) {
-        customerId = existingCustomer.id
-      } else {
-        const { data: newCustomer } = await supabase.from('customers').insert({
-          tenant_id: TENANT_ID, email: email.trim(), full_name: fullName.trim(),
-          phone: phone.trim() || null, address_street: addressStreet.trim() || null,
-          address_city: addressCity.trim() || null, address_province: addressProvince.trim() || null,
-          address_zip: addressZip.trim() || null, type: 'retail',
-        }).select().single()
-        customerId = newCustomer?.id ?? null
-      }
-
-      const subtotal = items.reduce((acc, i) => acc + i.price * i.quantity, 0)
-      const { data: order, error: orderError } = await supabase.from('orders').insert({
-        tenant_id: TENANT_ID, customer_id: customerId, status: 'pending',
-        payment_method: paymentMethod, payment_status: 'pending',
-        subtotal, shipping_cost: shippingCost, total: subtotal + shippingCost,
-        shipping_method: shippingMethod,
-        shipping_address: { street: addressStreet, city: addressCity, province: addressProvince, zip: addressZip },
-        notes: notes.trim() || null,
-      }).select().single()
-
-      if (orderError) throw orderError
-
-      await supabase.from('order_items').insert(
-        items.map(item => ({
-          order_id: order.id, variant_id: item.variantId,
-          product_name: item.productName, variant_desc: item.variantDesc,
-          quantity: item.quantity, unit_price: item.price, price_type: item.priceType,
-          subtotal: item.price * item.quantity,
-        }))
-      )
-      return order
+      const res = await fetch('/api/checkout/crear-pedido', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: fullName.trim(),
+          email: email.trim(),
+          phone: phone.trim() || null,
+          addressStreet: addressStreet.trim() || null,
+          addressCity: addressCity.trim() || null,
+          addressProvince: addressProvince.trim() || null,
+          addressZip: addressZip.trim() || null,
+          shippingMethod,
+          shippingCost,
+          notes: notes.trim() || null,
+          paymentMethod,
+          items: items.map(item => ({
+            variantId: item.variantId,
+            productName: item.productName,
+            variantDesc: item.variantDesc,
+            quantity: item.quantity,
+            price: item.price,
+            priceType: item.priceType,
+          })),
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Error al crear el pedido')
+      return data.order
     } catch (err: any) {
       setError(err.message ?? 'Error al crear el pedido')
       setLoading(false)
