@@ -116,7 +116,6 @@ export async function POST(req: NextRequest) {
           quantity: Number(item.quantity) || 1,
           unit_price: Number(item.price) || 0,
           price_type: item.priceType ?? 'retail',
-          subtotal: (Number(item.price) || 0) * (Number(item.quantity) || 1),
         }))
       )
       if (itemsError) {
