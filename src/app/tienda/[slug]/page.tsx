@@ -11,8 +11,46 @@ interface Props {
 
 export async function generateMetadata({ params }: Props) {
   const supabase = await createServerSupabase()
-  const { data } = await supabase.from('products').select('name, description').eq('slug', params.slug).single()
-  return { title: data?.name ?? 'Producto' }
+  const [{ data: tenantData }, { data }] = await Promise.all([
+    supabase.from('tenants').select('name').eq('id', TENANT_ID).single(),
+    supabase
+      .from('products')
+      .select('name, description, product_images(url, is_cover, sort_order)')
+      .eq('slug', params.slug)
+      .eq('active', true)
+      .single(),
+  ])
+  if (!data) return { title: 'Producto no encontrado' }
+
+  const storeName = tenantData?.name ?? 'Tienda'
+  const title = `${data.name} — ${storeName}`
+  const description = data.description
+    ? data.description.slice(0, 155)
+    : `Comprá ${data.name} en ${storeName}. Envíos a todo el país.`
+
+  const images = ((data.product_images ?? []) as any[]).sort((a, b) => {
+    if (a.is_cover) return -1
+    if (b.is_cover) return 1
+    return (a.sort_order ?? 0) - (b.sort_order ?? 0)
+  })
+  const coverUrl = images[0]?.url ?? null
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      ...(coverUrl ? { images: [{ url: coverUrl, width: 600, height: 900, alt: data.name }] } : {}),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      ...(coverUrl ? { images: [coverUrl] } : {}),
+    },
+  }
 }
 
 const formatPrice = (n: number) =>

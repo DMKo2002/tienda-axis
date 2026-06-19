@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createServerSupabase, TENANT_ID } from '@/lib/supabase-server'
+import { sendEmail, emailConfirmacionCliente, emailNotificacionDueno } from '@/lib/email'
 
-// Cliente con service role — bypasea RLS para crear clientes anónimos
+// Service role bypasa RLS — solo para operaciones server-side
 function createServiceClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,29 +18,97 @@ export async function POST(req: NextRequest) {
     const {
       fullName, email, phone,
       addressStreet, addressCity, addressProvince, addressZip,
-      shippingMethod, shippingCost, notes, items,
+      shippingMethod, notes, items,
       paymentMethod,
     } = body
+    // NOTA: shippingCost y price NO se confían desde el cliente — se recalculan desde la DB
 
     if (!fullName || !email || !items?.length) {
       return NextResponse.json({ error: 'Faltan datos obligatorios' }, { status: 400 })
     }
 
-    // Verificar si hay sesión activa (usuario registrado)
     const supabaseAuth = await createServerSupabase()
     const { data: { user } } = await supabaseAuth.auth.getUser()
-
-    // Usar service role para operaciones que pueden fallar por RLS
     const supabase = createServiceClient()
 
+    // ── 1. Fetch store config (envío + email notificación) ────────────────────
+    const [{ data: storeConf }, { data: tenant }] = await Promise.all([
+      supabase.from('store_config').select('custom_shipping, notification_email').eq('tenant_id', TENANT_ID).single(),
+      supabase.from('tenants').select('name').eq('id', TENANT_ID).single(),
+    ])
+
+    const storeName = (tenant as any)?.name ?? 'Tienda'
+
+    // ── 2. Validar costo de envío desde DB ────────────────────────────────────
+    const customMethods = ((storeConf as any)?.custom_shipping ?? []).filter((m: any) => m.active && m.name)
+    let validatedShippingCost = 0
+    let shippingLabel = shippingMethod ?? ''
+
+    if (shippingMethod?.startsWith('custom_')) {
+      const idx = Number(shippingMethod.split('_')[1])
+      const method = customMethods[idx]
+      validatedShippingCost = method?.price ?? 0
+      shippingLabel = method?.name ?? shippingMethod
+    }
+
+    // ── 3. Validar precios desde DB (ignorar precio enviado por el cliente) ───
+    const variantIds = (items as any[]).map((i: any) => i.variantId).filter(Boolean)
+
+    if (variantIds.length === 0) {
+      return NextResponse.json({ error: 'No se recibieron variantes válidas' }, { status: 400 })
+    }
+
+    const { data: priceRulesData, error: priceErr } = await supabase
+      .from('price_rules')
+      .select('variant_id, type, price, min_qty, active')
+      .in('variant_id', variantIds)
+      .eq('active', true)
+
+    if (priceErr) throw priceErr
+
+    const validatedItems = (items as any[]).map((item: any) => {
+      const rules = (priceRulesData ?? []).filter((r: any) => r.variant_id === item.variantId)
+      const retailRule = rules.find((r: any) => r.type === 'retail')
+      const wholesaleRule = rules.find((r: any) => r.type === 'wholesale')
+
+      let actualPrice: number
+      let actualPriceType: 'retail' | 'wholesale'
+
+      const qty = Number(item.quantity) || 1
+
+      if (
+        wholesaleRule &&
+        item.priceType === 'wholesale' &&
+        qty >= (wholesaleRule.min_qty ?? 1)
+      ) {
+        actualPrice = wholesaleRule.price
+        actualPriceType = 'wholesale'
+      } else if (retailRule) {
+        actualPrice = retailRule.price
+        actualPriceType = 'retail'
+      } else {
+        throw new Error(`Precio no encontrado para el producto "${item.productName}". Por favor recargá la página.`)
+      }
+
+      return {
+        variantId: item.variantId,
+        productName: String(item.productName ?? 'Producto'),
+        variantDesc: item.variantDesc ?? null,
+        quantity: qty,
+        price: actualPrice,
+        priceType: actualPriceType,
+      }
+    })
+
+    // ── 4. Recalcular totales desde precios validados ─────────────────────────
+    const subtotal = validatedItems.reduce((acc, i) => acc + i.price * i.quantity, 0)
+    const total = subtotal + validatedShippingCost
+
+    // ── 5. Customer upsert ────────────────────────────────────────────────────
     let customerId: string | null = null
 
     if (user) {
-      // Usuario autenticado → el customer.id = auth.uid()
       customerId = user.id
-
-      // Solo crear el customer si no existe todavía — no sobreescribir datos en cada pedido.
-      // Las actualizaciones de perfil se hacen desde /cuenta, no desde el checkout.
       await supabase.from('customers').upsert({
         id: user.id,
         tenant_id: TENANT_ID,
@@ -52,7 +121,6 @@ export async function POST(req: NextRequest) {
         address_zip: addressZip || null,
       }, { onConflict: 'id', ignoreDuplicates: true })
     } else {
-      // Usuario anónimo → buscar por email o crear nuevo
       const { data: existing } = await supabase
         .from('customers')
         .select('id')
@@ -83,8 +151,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Crear el pedido
-    const subtotal = items.reduce((acc: number, i: any) => acc + i.price * i.quantity, 0)
+    // ── 6. Crear pedido ───────────────────────────────────────────────────────
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
@@ -94,10 +161,15 @@ export async function POST(req: NextRequest) {
         payment_method: paymentMethod,
         payment_status: 'pending',
         subtotal,
-        shipping_cost: shippingCost ?? 0,
-        total: subtotal + (shippingCost ?? 0),
+        shipping_cost: validatedShippingCost,
+        total,
         shipping_method: shippingMethod,
-        shipping_address: { street: addressStreet, city: addressCity, province: addressProvince, zip: addressZip },
+        shipping_address: {
+          street: addressStreet,
+          city: addressCity,
+          province: addressProvince,
+          zip: addressZip,
+        },
         notes: notes || null,
       })
       .select()
@@ -105,25 +177,20 @@ export async function POST(req: NextRequest) {
 
     if (orderError) throw orderError
 
-    // Crear los items del pedido
-    if (!items || items.length === 0) {
-      return NextResponse.json({ ok: true, order })
-    }
-
-    const itemsPayload = items.map((item: any) => ({
+    // ── 7. Crear items del pedido ─────────────────────────────────────────────
+    const itemsPayload = validatedItems.map(item => ({
       order_id: order.id,
       variant_id: item.variantId ?? null,
-      product_name: String(item.productName ?? 'Producto'),
+      product_name: item.productName,
       variant_desc: item.variantDesc ?? null,
-      quantity: Number(item.quantity) || 1,
-      unit_price: Number(item.price) || 0,
-      price_type: item.priceType ?? 'retail',
+      quantity: item.quantity,
+      unit_price: item.price,
+      price_type: item.priceType,
     }))
 
     const { error: itemsError } = await supabase
       .from('order_items')
       .insert(itemsPayload)
-      .select()
 
     if (itemsError) {
       console.error('Error insertando order_items:', JSON.stringify(itemsError))
@@ -131,6 +198,51 @@ export async function POST(req: NextRequest) {
         { error: 'Error guardando productos: ' + itemsError.message },
         { status: 500 }
       )
+    }
+
+    // ── 8. Emails (fire & forget — no bloquean la respuesta) ─────────────────
+    const emailItems = validatedItems.map(i => ({
+      productName: i.productName,
+      variantDesc: i.variantDesc,
+      quantity: i.quantity,
+      unitPrice: i.price,
+    }))
+
+    const emailPayload = {
+      storeName,
+      orderId: order.id,
+      customerName: fullName.trim(),
+      items: emailItems,
+      subtotal,
+      shippingCost: validatedShippingCost,
+      total,
+      shippingLabel,
+      paymentMethod,
+    }
+
+    // Al cliente
+    sendEmail({
+      to: email.trim(),
+      subject: `Tu pedido #${order.id.slice(0, 8).toUpperCase()} fue recibido — ${storeName}`,
+      html: emailConfirmacionCliente(emailPayload),
+    }).catch(e => console.error('[email cliente]', e))
+
+    // Al dueño
+    const ownerEmail = (storeConf as any)?.notification_email
+    if (ownerEmail) {
+      sendEmail({
+        to: ownerEmail,
+        subject: `🛍️ Nuevo pedido #${order.id.slice(0, 8).toUpperCase()} — ${storeName}`,
+        html: emailNotificacionDueno({
+          ...emailPayload,
+          customerEmail: email.trim(),
+          customerPhone: phone || null,
+          addressStreet: addressStreet || null,
+          addressCity: addressCity || null,
+          addressProvince: addressProvince || null,
+          addressZip: addressZip || null,
+        }),
+      }).catch(e => console.error('[email dueño]', e))
     }
 
     return NextResponse.json({ ok: true, order })
