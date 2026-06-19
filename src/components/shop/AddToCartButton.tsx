@@ -57,6 +57,32 @@ export default function AddToCartButton({ product, sizes, colors, showPrices = t
   const [added, setAdded] = useState(false)
   const [stockError, setStockError] = useState<string | null>(null)
 
+  // Helper: get stock for a specific size+color combination
+  function getVariantStock(size: string | null, color: string | null): number {
+    const v = product.variants.find(v => {
+      const sm = sizes.length === 0 || v.size === size
+      const cm = colors.length === 0 || v.color === color
+      return sm && cm
+    })
+    return v?.stock ?? 0
+  }
+
+  // Helper: is a size available with any color (or the selected color)?
+  function isSizeAvailable(size: string): boolean {
+    if (colors.length === 0) return getVariantStock(size, null) > 0
+    // If a color is selected, check only that color+size combo
+    if (selectedColor) return getVariantStock(size, selectedColor) > 0
+    // Otherwise check if any color has stock for this size
+    return colors.some(c => getVariantStock(size, c) > 0)
+  }
+
+  // Helper: is a color available with any size (or the selected size)?
+  function isColorAvailable(color: string): boolean {
+    if (sizes.length === 0) return getVariantStock(null, color) > 0
+    if (selectedSize) return getVariantStock(selectedSize, color) > 0
+    return sizes.some(s => getVariantStock(s, color) > 0)
+  }
+
   const selectedVariant = product.variants.find(v => {
     const sizeMatch = sizes.length === 0 || v.size === selectedSize
     const colorMatch = colors.length === 0 || v.color === selectedColor
@@ -117,11 +143,13 @@ export default function AddToCartButton({ product, sizes, colors, showPrices = t
               const hex = getColorHex(color)
               const light = isLight(hex)
               const selected = selectedColor === color
+              const available = isColorAvailable(color)
               return (
                 <button
                   key={color}
-                  onClick={() => setSelectedColor(color)}
-                  title={color}
+                  onClick={() => { if (available) { setSelectedColor(color); setStockError(null) } }}
+                  title={available ? color : `${color} — sin stock`}
+                  disabled={!available}
                   style={{
                     width: 28,
                     height: 28,
@@ -134,12 +162,21 @@ export default function AddToCartButton({ product, sizes, colors, showPrices = t
                       : '1px solid transparent',
                     outline: selected ? '2px solid white' : 'none',
                     outlineOffset: -4,
-                    cursor: 'pointer',
+                    cursor: available ? 'pointer' : 'not-allowed',
+                    opacity: available ? 1 : 0.35,
                     transition: 'transform 0.15s',
                     transform: selected ? 'scale(1.15)' : 'scale(1)',
                     flexShrink: 0,
+                    position: 'relative',
                   }}
-                />
+                >
+                  {!available && (
+                    <span style={{
+                      position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 16, color: light ? '#666' : '#fff', fontWeight: 300,
+                    }}>×</span>
+                  )}
+                </button>
               )
             })}
           </div>
@@ -153,19 +190,26 @@ export default function AddToCartButton({ product, sizes, colors, showPrices = t
             Talle
           </p>
           <div className="flex gap-2 flex-wrap">
-            {sizes.map(size => (
-              <button
-                key={size}
-                onClick={() => setSelectedSize(size)}
-                className={`h-9 px-3 text-xs font-light border transition-colors rounded-sm ${
-                  selectedSize === size
-                    ? 'border-[var(--color-charcoal)] bg-[var(--color-charcoal)] text-white'
-                    : 'border-[var(--color-border)] text-[var(--color-charcoal)] hover:border-[var(--color-charcoal)]'
-                }`}
-              >
-                {size}
-              </button>
-            ))}
+            {sizes.map(size => {
+              const available = isSizeAvailable(size)
+              return (
+                <button
+                  key={size}
+                  onClick={() => { if (available) { setSelectedSize(size); setStockError(null) } }}
+                  disabled={!available}
+                  className={`h-9 px-3 text-xs font-light border transition-colors rounded-sm relative ${
+                    selectedSize === size
+                      ? 'border-[var(--color-charcoal)] bg-[var(--color-charcoal)] text-white'
+                      : available
+                      ? 'border-[var(--color-border)] text-[var(--color-charcoal)] hover:border-[var(--color-charcoal)]'
+                      : 'border-[var(--color-border)] text-[var(--color-stone)]/40 cursor-not-allowed line-through'
+                  }`}
+                  title={available ? size : `${size} — sin stock`}
+                >
+                  {size}
+                </button>
+              )
+            })}
           </div>
         </div>
       )}
@@ -210,7 +254,7 @@ export default function AddToCartButton({ product, sizes, colors, showPrices = t
 
       {/* Sin stock */}
       {selectedVariant && !inStock && (
-        <p className="text-xs text-red-400 tracking-wide">Sin stock disponible</p>
+        <p className="text-xs text-red-400 tracking-wide">Sin stock disponible para esta variante</p>
       )}
 
       {/* Botón agregar */}

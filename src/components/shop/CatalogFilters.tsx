@@ -175,6 +175,19 @@ export default function CatalogFilters({
                         className={`text-xs font-light transition-colors ${currentCat === sub.slug ? 'text-[var(--color-charcoal)] border-b border-[var(--color-charcoal)]' : 'text-[var(--color-stone)] hover:text-[var(--color-charcoal)]'}`}>
                         {sub.name}{sub.productCount !== undefined && sub.productCount > 0 && <span className="ml-1 text-[10px] text-[var(--color-stone)]/60">({sub.productCount})</span>}
                       </button>
+                      {/* Sub-subcategorías */}
+                      {sub.subcategories && sub.subcategories.length > 0 && (
+                        <ul className="mt-1 ml-2.5 space-y-1 border-l border-[var(--color-border)] pl-2.5">
+                          {sub.subcategories.map(leaf => (
+                            <li key={leaf.id}>
+                              <button onClick={() => router.push(buildUrl({ cat: leaf.slug }))}
+                                className={`text-[11px] font-light transition-colors ${currentCat === leaf.slug ? 'text-[var(--color-charcoal)] border-b border-[var(--color-charcoal)]' : 'text-[var(--color-stone)] hover:text-[var(--color-charcoal)]'}`}>
+                                {leaf.name}{leaf.productCount !== undefined && leaf.productCount > 0 && <span className="ml-1 text-[10px] text-[var(--color-stone)]/60">({leaf.productCount})</span>}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </li>
                   ))}
                 </ul>
