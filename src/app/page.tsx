@@ -5,6 +5,8 @@ import ProductCard from '@/components/shop/ProductCard'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export default async function HomePage() {
   const supabase = await createServerSupabase()
 
@@ -17,7 +19,7 @@ export default async function HomePage() {
 
   const { data: config } = await supabase
     .from('store_config')
-    .select('logo_url, hero_image_url, whatsapp_number, notification_email, instagram_url, facebook_url, tiktok_url, pickup_address, pickup_enabled, branches')
+    .select('logo_url, hero_image_url, whatsapp_number, notification_email, instagram_url, facebook_url, tiktok_url, pickup_address, pickup_enabled, branches, price_visibility')
     .eq('tenant_id', TENANT_ID)
     .single()
 
@@ -31,6 +33,24 @@ export default async function HomePage() {
     .limit(4)
 
   const storeName = tenant?.name ?? 'TIENDA'
+  const priceVisibility = (config as any)?.price_visibility ?? 'all'
+
+  // Check if current user can see prices
+  let showPrices = true
+  if (priceVisibility !== 'all') {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      showPrices = false
+    } else if (priceVisibility === 'wholesale_only') {
+      const { data: customer } = await supabase
+        .from('customers')
+        .select('type')
+        .eq('email', user.email ?? '')
+        .eq('tenant_id', TENANT_ID)
+        .single()
+      showPrices = customer?.type === 'wholesale'
+    }
+  }
 
   return (
     <>
@@ -122,6 +142,8 @@ export default async function HomePage() {
                   coverUrl={cover?.url}
                   retailPrice={retailPrice}
                   wholesalePrice={wholesalePrice}
+                  showPrices={showPrices}
+                  priceVisibility={priceVisibility}
                   colors={colors}
                   sizes={sizes}
                   index={i}

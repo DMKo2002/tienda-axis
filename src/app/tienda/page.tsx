@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { createServerSupabase, TENANT_ID } from '@/lib/supabase-server'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -16,6 +17,7 @@ interface Props {
   }
 }
 
+export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Tienda' }
 
 export default async function TiendaPage({ searchParams }: Props) {
@@ -209,6 +211,7 @@ export default async function TiendaPage({ searchParams }: Props) {
 
             {/* Sidebar filtros */}
             <aside className="w-full md:w-52 flex-shrink-0">
+              <Suspense fallback={<div className="w-52 animate-pulse bg-zinc-100 rounded-lg h-64" />}>
               <CatalogFilters
                 categories={categoriesWithCount}
                 availableColors={allColors}
@@ -221,6 +224,7 @@ export default async function TiendaPage({ searchParams }: Props) {
                 currentPrecioMax={precioMax}
                 currentDescuento={soloDescuento}
               />
+              </Suspense>
             </aside>
 
             {/* Grid productos */}
