@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, TENANT_ID } from '@/lib/supabase-server'
+import { registroLimiter } from '@/lib/ratelimit'
 
 // ──────────────────────────────────────────────────────────
 //  POST /api/auth/registro
@@ -24,6 +25,12 @@ async function verifyTurnstile(token: string): Promise<boolean> {
 }
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '127.0.0.1'
+  const { success } = await registroLimiter.limit(ip)
+  if (!success) {
+    return NextResponse.json({ error: 'Demasiados intentos. Esperá 10 minutos e intentá de nuevo.' }, { status: 429 })
+  }
+
   try {
     const body = await req.json()
     const { nombre, apellido, email, password, tipo, empresa, cuit, direccion, turnstileToken } = body

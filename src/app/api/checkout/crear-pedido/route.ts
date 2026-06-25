@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createServerSupabase, TENANT_ID } from '@/lib/supabase-server'
 import { sendEmail, emailConfirmacionCliente, emailNotificacionDueno } from '@/lib/email'
+import { checkoutLimiter } from '@/lib/ratelimit'
 
 // Service role bypasa RLS — solo para operaciones server-side
 function createServiceClient() {
@@ -13,6 +14,13 @@ function createServiceClient() {
 }
 
 export async function POST(req: NextRequest) {
+  // Rate limiting por IP
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '127.0.0.1'
+  const { success } = await checkoutLimiter.limit(ip)
+  if (!success) {
+    return NextResponse.json({ error: 'Demasiados intentos. Esperá unos segundos e intentá de nuevo.' }, { status: 429 })
+  }
+
   try {
     const body = await req.json()
     const {
