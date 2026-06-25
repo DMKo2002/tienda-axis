@@ -1,5 +1,8 @@
 import { cookies } from 'next/headers'
 import { createServerSupabase, TENANT_ID } from '@/lib/supabase-server'
+
+// Siempre SSR fresco — sin esto Next.js cachea la página y los cambios del panel no se ven
+export const dynamic = 'force-dynamic'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import ProductCard from '@/components/shop/ProductCard'
