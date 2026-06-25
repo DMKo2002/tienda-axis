@@ -92,7 +92,7 @@ export default async function HomePage() {
         </section>
 
         {/* ── FEATURED COLLECTION ──────────────────────────────── */}
-        <section className="max-w-7xl mx-auto px-6 py-24">
+        <section className="w-full px-6 py-24">
 
           <div className="flex items-center justify-between mb-12">
             <div>
@@ -173,7 +173,7 @@ export default async function HomePage() {
         </section>
 
         {/* ── MOODBOARD ────────────────────────────────────────── */}
-        <section className="max-w-7xl mx-auto px-6 py-24">
+        <section className="w-full px-6 py-24">
           <div className="mb-10">
             <p className="text-xs tracking-[0.2em] uppercase text-[var(--color-stone)] mb-2">Instagram</p>
             <h2 className="font-display text-3xl font-light text-[var(--color-charcoal)]">MoodBoard</h2>
