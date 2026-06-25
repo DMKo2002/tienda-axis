@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers'
 import { createServerSupabase, TENANT_ID } from '@/lib/supabase-server'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -6,6 +7,10 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 
 export default async function HomePage() {
+  // cookies() debe llamarse ANTES de cualquier await
+  const cookieStore = cookies()
+  const isLoggedIn = cookieStore.getAll().some(c => c.name.includes('-auth-token') && c.value.length > 10)
+
   const supabase = await createServerSupabase()
 
   // Datos de la tienda
@@ -17,7 +22,7 @@ export default async function HomePage() {
 
   const { data: config } = await supabase
     .from('store_config')
-    .select('logo_url, hero_image_url, whatsapp_number, notification_email, instagram_url, facebook_url, tiktok_url, pickup_address, pickup_enabled, branches')
+    .select('logo_url, hero_image_url, whatsapp_number, notification_email, instagram_url, facebook_url, tiktok_url, pickup_address, pickup_enabled, branches, price_visibility')
     .eq('tenant_id', TENANT_ID)
     .single()
 
@@ -31,6 +36,8 @@ export default async function HomePage() {
     .limit(4)
 
   const storeName = tenant?.name ?? 'TIENDA'
+  const priceVisibility = (config as any)?.price_visibility ?? 'all'
+  const showPrices = priceVisibility === 'all' || (priceVisibility === 'logged_in' && isLoggedIn)
 
   return (
     <>
@@ -122,6 +129,8 @@ export default async function HomePage() {
                   coverUrl={cover?.url}
                   retailPrice={retailPrice}
                   wholesalePrice={wholesalePrice}
+                  showPrices={showPrices}
+                  priceVisibility={priceVisibility}
                   colors={colors}
                   sizes={sizes}
                   index={i}
@@ -191,7 +200,7 @@ export default async function HomePage() {
               >
                 <p className="text-xs tracking-[0.15em] uppercase text-[var(--color-charcoal)]/60">
                   {item.label}
-                </p>
+                       </p>
               </div>
             ))}
           </div>
