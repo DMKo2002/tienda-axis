@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
     // Insertar en tabla customers
     await supabase.from('customers').insert({
       id: authData.user.id,
-      tenant_id: TENANT_ID,
+      tenant_id: TENANT_ID(),
       email,
       full_name: nombre,
       last_name: apellido ?? null,
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
 
     // Email de bienvenida (no bloqueante)
     const storeUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
-    const { data: tenantData } = await supabase.from('tenants').select('name').eq('id', TENANT_ID).single()
+    const { data: tenantData } = await supabase.from('tenants').select('name').eq('id', TENANT_ID()).single()
     const storeName = (tenantData as any)?.name ?? 'Tienda'
     sendEmail({
       to: email,

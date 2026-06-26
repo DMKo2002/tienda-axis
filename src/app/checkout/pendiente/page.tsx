@@ -12,11 +12,11 @@ export default async function CheckoutPendientePage({
   const supabase = await createServerSupabase()
   const orderId = searchParams.order_id
 
-  const { data: tenant } = await supabase.from('tenants').select('name').eq('id', TENANT_ID).single()
+  const { data: tenant } = await supabase.from('tenants').select('name').eq('id', TENANT_ID()).single()
   const { data: config } = await supabase
     .from('store_config')
     .select('logo_url, whatsapp_number, notification_email, transfer_cbu, transfer_alias')
-    .eq('tenant_id', TENANT_ID)
+    .eq('tenant_id', TENANT_ID())
     .single()
 
   const { data: order } = orderId

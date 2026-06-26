@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { getTenantId } from '@/lib/supabase-server'
 
 // Sitemap dinámico — se regenera con cada build o con revalidación
 // Para forzar regeneración: `revalidatePath('/sitemap.xml')` desde un Server Action o webhook
@@ -8,7 +9,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID!
 const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000').replace(/\/$/, '')
 
 export default async function sitemap() {
@@ -16,12 +16,12 @@ export default async function sitemap() {
     supabase
       .from('products')
       .select('slug, updated_at')
-      .eq('tenant_id', TENANT_ID)
+      .eq('tenant_id', getTenantId())
       .eq('active', true),
     supabase
       .from('categories')
       .select('slug')
-      .eq('tenant_id', TENANT_ID)
+      .eq('tenant_id', getTenantId())
       .eq('active', true),
   ])
 

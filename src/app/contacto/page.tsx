@@ -41,10 +41,10 @@ export default function ContactPage() {
   useEffect(() => {
     async function load() {
       const [{ data: tenant }, { data: config }] = await Promise.all([
-        supabase.from('tenants').select('name').eq('id', TENANT_ID).single(),
+        supabase.from('tenants').select('name').eq('id', TENANT_ID()).single(),
         supabase.from('store_config')
           .select('logo_url, whatsapp_number, notification_email, instagram_url, facebook_url, branches')
-          .eq('tenant_id', TENANT_ID).single(),
+          .eq('tenant_id', TENANT_ID()).single(),
       ])
       setStoreName(tenant?.name ?? 'TIENDA')
       setLogoUrl(config?.logo_url ?? null)

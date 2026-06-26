@@ -11,8 +11,8 @@ export default async function CheckoutErrorPage({
 }) {
   const supabase = await createServerSupabase()
 
-  const { data: tenant } = await supabase.from('tenants').select('name').eq('id', TENANT_ID).single()
-  const { data: config } = await supabase.from('store_config').select('logo_url, whatsapp_number, notification_email').eq('tenant_id', TENANT_ID).single()
+  const { data: tenant } = await supabase.from('tenants').select('name').eq('id', TENANT_ID()).single()
+  const { data: config } = await supabase.from('store_config').select('logo_url, whatsapp_number, notification_email').eq('tenant_id', TENANT_ID()).single()
 
   return (
     <>

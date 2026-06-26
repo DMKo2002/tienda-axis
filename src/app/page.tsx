@@ -21,20 +21,20 @@ export default async function HomePage() {
   const { data: tenant } = await supabase
     .from('tenants')
     .select('name, domain')
-    .eq('id', TENANT_ID)
+    .eq('id', TENANT_ID())
     .single()
 
   const { data: config } = await supabase
     .from('store_config')
     .select('logo_url, hero_image_url, hero_eyebrow, hero_title_line1, hero_title_italic, hero_title_line3, hero_season, hero_text_color, whatsapp_number, notification_email, instagram_url, facebook_url, tiktok_url, pickup_address, pickup_enabled, branches, price_visibility')
-    .eq('tenant_id', TENANT_ID)
+    .eq('tenant_id', TENANT_ID())
     .single()
 
   // Imágenes configurables desde panel Personalización
   const { data: assetsRows } = await supabase
     .from('store_assets')
     .select('slot, url')
-    .eq('tenant_id', TENANT_ID)
+    .eq('tenant_id', TENANT_ID())
 
   const asset = (slot: string): string | null =>
     assetsRows?.find(a => a.slot === slot)?.url ?? null
@@ -43,7 +43,7 @@ export default async function HomePage() {
   const { data: products } = await supabase
     .from('products')
     .select('id, name, slug, product_images(*), variants(price_rules(*))')
-    .eq('tenant_id', TENANT_ID)
+    .eq('tenant_id', TENANT_ID())
     .eq('active', true)
     .order('created_at', { ascending: false })
     .limit(4)

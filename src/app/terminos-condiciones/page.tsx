@@ -7,10 +7,10 @@ export const metadata = { title: 'Términos y Condiciones', robots: { index: fal
 export default async function TermsPage() {
   const supabase = await createServerSupabase()
   const [{ data: tenant }, { data: config }] = await Promise.all([
-    supabase.from('tenants').select('name').eq('id', TENANT_ID).single(),
+    supabase.from('tenants').select('name').eq('id', TENANT_ID()).single(),
     supabase.from('store_config')
       .select('logo_url, whatsapp_number, notification_email, instagram_url, facebook_url, tiktok_url, branches, terms_and_conditions')
-      .eq('tenant_id', TENANT_ID).single(),
+      .eq('tenant_id', TENANT_ID()).single(),
   ])
   const storeName = tenant?.name ?? 'TIENDA'
   const text = (config as any)?.terms_and_conditions

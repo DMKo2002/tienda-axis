@@ -20,7 +20,7 @@ export default function CarritoPage() {
     supabase
       .from('store_config')
       .select('min_order_amount')
-      .eq('tenant_id', TENANT_ID)
+      .eq('tenant_id', TENANT_ID())
       .single()
       .then(({ data }) => setMinOrder(data?.min_order_amount ?? null))
   }, [])

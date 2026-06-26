@@ -28,8 +28,8 @@ export default async function CuentaPage() {
   if (!user) redirect('/cuenta/login')
 
   const [{ data: config }, { data: tenant }, { data: customer }, { data: orders }] = await Promise.all([
-    supabase.from('store_config').select('logo_url, whatsapp_number, notification_email').eq('tenant_id', TENANT_ID).single(),
-    supabase.from('tenants').select('name').eq('id', TENANT_ID).single(),
+    supabase.from('store_config').select('logo_url, whatsapp_number, notification_email').eq('tenant_id', TENANT_ID()).single(),
+    supabase.from('tenants').select('name').eq('id', TENANT_ID()).single(),
     supabase.from('customers').select('*').eq('id', user!.id).single(),
     supabase.from('orders')
       .select('id, status, total, shipping_cost, created_at, payment_method, order_items(product_name, quantity, unit_price)')

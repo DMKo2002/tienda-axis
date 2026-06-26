@@ -27,13 +27,13 @@ export default async function TiendaPage({ searchParams }: Props) {
 
   const supabase = await createServerSupabase()
 
-  const { data: tenant } = await supabase.from('tenants').select('name').eq('id', TENANT_ID).single()
-  const { data: config } = await supabase.from('store_config').select('logo_url, whatsapp_number, notification_email, instagram_url, facebook_url, tiktok_url, pickup_address, branches, pickup_enabled, price_visibility').eq('tenant_id', TENANT_ID).single()
+  const { data: tenant } = await supabase.from('tenants').select('name').eq('id', TENANT_ID()).single()
+  const { data: config } = await supabase.from('store_config').select('logo_url, whatsapp_number, notification_email, instagram_url, facebook_url, tiktok_url, pickup_address, branches, pickup_enabled, price_visibility').eq('tenant_id', TENANT_ID()).single()
   // Fetch all active categories (top-level + subcategories)
   const { data: allCategories } = await supabase
     .from('categories')
     .select('id, name, slug, parent_id')
-    .eq('tenant_id', TENANT_ID)
+    .eq('tenant_id', TENANT_ID())
     .eq('active', true)
     .order('sort_order')
 
@@ -59,7 +59,7 @@ export default async function TiendaPage({ searchParams }: Props) {
   let query = supabase
     .from('products')
     .select('id, name, slug, category_id, product_images(*), variants(color, size, price_rules(type, price, compare_at_price, active, min_qty))')
-    .eq('tenant_id', TENANT_ID)
+    .eq('tenant_id', TENANT_ID())
     .eq('active', true)
 
   // Filter by category (includes subcategories when a top-level cat is selected)
@@ -187,7 +187,7 @@ export default async function TiendaPage({ searchParams }: Props) {
               const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString())
               const email = payload?.email ?? ''
               if (email) {
-                const { data: cust } = await supabase.from('customers').select('type').eq('email', email).eq('tenant_id', TENANT_ID).single()
+                const { data: cust } = await supabase.from('customers').select('type').eq('email', email).eq('tenant_id', TENANT_ID()).single()
                 showPrices = cust?.type === 'wholesale'
               }
             }

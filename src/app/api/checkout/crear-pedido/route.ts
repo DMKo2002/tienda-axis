@@ -41,8 +41,8 @@ export async function POST(req: NextRequest) {
 
     // ── 1. Fetch store config (envío + email notificación) ────────────────────
     const [{ data: storeConf }, { data: tenant }] = await Promise.all([
-      supabase.from('store_config').select('custom_shipping, notification_email').eq('tenant_id', TENANT_ID).single(),
-      supabase.from('tenants').select('name').eq('id', TENANT_ID).single(),
+      supabase.from('store_config').select('custom_shipping, notification_email').eq('tenant_id', TENANT_ID()).single(),
+      supabase.from('tenants').select('name').eq('id', TENANT_ID()).single(),
     ])
 
     const storeName = (tenant as any)?.name ?? 'Tienda'
@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
       customerId = user.id
       await supabase.from('customers').upsert({
         id: user.id,
-        tenant_id: TENANT_ID,
+        tenant_id: TENANT_ID(),
         email: user.email ?? email,
         full_name: fullName,
         phone: phone || null,
@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
       const { data: existing } = await supabase
         .from('customers')
         .select('id')
-        .eq('tenant_id', TENANT_ID)
+        .eq('tenant_id', TENANT_ID())
         .eq('email', email.trim())
         .single()
 
@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
         const { data: newCustomer } = await supabase
           .from('customers')
           .insert({
-            tenant_id: TENANT_ID,
+            tenant_id: TENANT_ID(),
             email: email.trim(),
             full_name: fullName.trim(),
             phone: phone || null,
@@ -163,7 +163,7 @@ export async function POST(req: NextRequest) {
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
-        tenant_id: TENANT_ID,
+        tenant_id: TENANT_ID(),
         customer_id: customerId,
         status: 'pending',
         payment_method: paymentMethod,

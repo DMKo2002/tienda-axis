@@ -16,16 +16,16 @@ export async function POST(req: NextRequest) {
     const { data: config } = await supabase
       .from('store_config')
       .select('mp_access_token, mp_enabled')
-      .eq('tenant_id', TENANT_ID)
+      .eq('tenant_id', TENANT_ID())
       .single()
 
     if (!config?.mp_enabled) {
       return NextResponse.json({ error: 'MercadoPago no está habilitado' }, { status: 400 })
     }
 
-    const accessToken = config?.mp_access_token ?? process.env.MP_ACCESS_TOKEN!
+    const accessToken = config?.mp_access_token
     if (!accessToken) {
-      return NextResponse.json({ error: 'Token de MercadoPago no configurado' }, { status: 400 })
+      return NextResponse.json({ error: 'Configurá tu Access Token de MercadoPago en Panel Admin → Mi tienda → Medios de pago' }, { status: 400 })
     }
 
     const client = new MercadoPagoConfig({ accessToken })
@@ -70,6 +70,4 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error('Error MP:', error)
-    return NextResponse.json({ error: error.message ?? 'Error interno' }, { status: 500 })
-  }
-}
+    return NextResponse.json({ error: error.message ?? 'Error interno' }, { 

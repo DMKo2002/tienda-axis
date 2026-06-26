@@ -12,7 +12,7 @@ interface Props {
 export async function generateMetadata({ params }: Props) {
   const supabase = await createServerSupabase()
   const [{ data: tenantData }, { data }] = await Promise.all([
-    supabase.from('tenants').select('name').eq('id', TENANT_ID).single(),
+    supabase.from('tenants').select('name').eq('id', TENANT_ID()).single(),
     supabase
       .from('products')
       .select('name, description, product_images(url, is_cover, sort_order)')
@@ -59,17 +59,17 @@ const formatPrice = (n: number) =>
 export default async function ProductoPage({ params }: Props) {
   const supabase = await createServerSupabase()
 
-  const { data: tenant } = await supabase.from('tenants').select('name').eq('id', TENANT_ID).single()
+  const { data: tenant } = await supabase.from('tenants').select('name').eq('id', TENANT_ID()).single()
   const { data: config } = await supabase
     .from('store_config')
     .select('logo_url, whatsapp_number, notification_email, price_visibility')
-    .eq('tenant_id', TENANT_ID)
+    .eq('tenant_id', TENANT_ID())
     .single()
 
   const { data: product } = await supabase
     .from('products')
     .select('*, product_images(*), variants(*, price_rules(*))')
-    .eq('tenant_id', TENANT_ID)
+    .eq('tenant_id', TENANT_ID())
     .eq('slug', params.slug)
     .eq('active', true)
     .single()
@@ -98,7 +98,7 @@ export default async function ProductoPage({ params }: Props) {
             .from('customers')
             .select('type')
             .eq('email', user.email ?? '')
-            .eq('tenant_id', TENANT_ID)
+            .eq('tenant_id', TENANT_ID())
             .single()
           showPrices = customer?.type === 'wholesale'
         }

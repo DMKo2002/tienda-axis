@@ -9,7 +9,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from('store_assets')
     .select('slot, url, updated_at')
-    .eq('tenant_id', TENANT_ID)
+    .eq('tenant_id', TENANT_ID())
 
-  return NextResponse.json({ tenant_id: TENANT_ID, rows: data, error: error?.message ?? null })
+  return NextResponse.json({ tenant_id: TENANT_ID(), rows: data, error: error?.message ?? null })
 }

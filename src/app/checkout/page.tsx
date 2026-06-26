@@ -37,7 +37,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     supabase.from('store_config')
       .select('mp_enabled, transfer_enabled, transfer_cbu, transfer_alias, whatsapp_number, min_order_amount, custom_shipping')
-      .eq('tenant_id', TENANT_ID)
+      .eq('tenant_id', TENANT_ID())
       .single()
       .then(({ data }) => {
         setStoreConfig(data)
@@ -120,7 +120,7 @@ export default function CheckoutPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          tenant_id: TENANT_ID, order_id: order.id,
+          tenant_id: TENANT_ID(), order_id: order.id,
           items: items.map(item => ({
             variant_id: item.variantId, name: item.productName,
             variant_desc: item.variantDesc, quantity: item.quantity, unit_price: item.price,

@@ -7,10 +7,10 @@ export const metadata = { title: 'Política de Cookies', robots: { index: false,
 export default async function CookiesPage() {
   const supabase = await createServerSupabase()
   const [{ data: tenant }, { data: config }] = await Promise.all([
-    supabase.from('tenants').select('name').eq('id', TENANT_ID).single(),
+    supabase.from('tenants').select('name').eq('id', TENANT_ID()).single(),
     supabase.from('store_config')
       .select('logo_url, whatsapp_number, notification_email, instagram_url, facebook_url, tiktok_url, branches, cookies_policy')
-      .eq('tenant_id', TENANT_ID).single(),
+      .eq('tenant_id', TENANT_ID()).single(),
   ])
   const storeName = tenant?.name ?? 'TIENDA'
   const text = (config as any)?.cookies_policy

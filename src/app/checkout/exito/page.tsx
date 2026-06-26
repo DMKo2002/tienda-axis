@@ -18,11 +18,11 @@ export default async function CheckoutExitoPage({
       .from('orders')
       .update({ payment_status: 'paid', status: 'confirmed' })
       .eq('id', orderId)
-      .eq('tenant_id', TENANT_ID)
+      .eq('tenant_id', TENANT_ID())
   }
 
-  const { data: tenant } = await supabase.from('tenants').select('name').eq('id', TENANT_ID).single()
-  const { data: config } = await supabase.from('store_config').select('logo_url, whatsapp_number, notification_email').eq('tenant_id', TENANT_ID).single()
+  const { data: tenant } = await supabase.from('tenants').select('name').eq('id', TENANT_ID()).single()
+  const { data: config } = await supabase.from('store_config').select('logo_url, whatsapp_number, notification_email').eq('tenant_id', TENANT_ID()).single()
 
   return (
     <>

@@ -1,5 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 
 export async function createServerSupabase() {
   const cookieStore = await cookies()
@@ -21,4 +21,18 @@ export async function createServerSupabase() {
   )
 }
 
-export const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID!
+/**
+ * Devuelve el tenant_id del request actual.
+ * En producción lo resuelve el middleware desde el dominio (x-tenant-id header).
+ * En local cae al env var NEXT_PUBLIC_TENANT_ID.
+ */
+export function getTenantId(): string {
+  try {
+    const id = headers().get('x-tenant-id')
+    if (id) return id
+  } catch {}
+  return process.env.NEXT_PUBLIC_TENANT_ID ?? ''
+}
+
+// Alias callable — los archivos existentes solo agregan () al usarlo
+export const TENANT_ID = getTenantId
