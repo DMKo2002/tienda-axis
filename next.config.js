@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 
 const securityHeaders = [
-  { key: 'X-Frame-Options',        value: 'SAMEORIGIN' },
+  // X-Frame-Options omitido intencionalmente: estos storefronts se embeben
+  // en el onboarding del Panel Admin como previews. El Panel Admin sí tiene SAMEORIGIN.
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy',        value: 'strict-origin-when-cross-origin' },
   { key: 'Permissions-Policy',     value: 'camera=(), microphone=(), geolocation=()' },
