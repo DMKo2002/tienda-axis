@@ -7,4 +7,4 @@ export function createClient() {
   )
 }
 
-// Para client components — lee env var (NEXT_PUBLIC_ es a
+// Para client components: lee env var (NEXT_PUBLIC_ es acce
