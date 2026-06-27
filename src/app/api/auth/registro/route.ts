@@ -1,21 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, TENANT_ID } from '@/lib/supabase-server'
-import { registroLimiter } from '@/lib/ratelimit'
-import { sendEmail, emailBienvenidaCliente } from '@/lib/email'
-
-// ──────────────────────────────────────────────────────────
-//  POST /api/auth/registro
-//  Body: { nombre, apellido, email, password, tipo,
-//          empresa?, cuit?, direccion?,
-//          turnstileToken }
-// ──────────────────────────────────────────────────────────
 
 async function verifyTurnstile(token: string): Promise<boolean> {
   const secret = process.env.TURNSTILE_SECRET_KEY
-  if (!secret) {
-    console.warn('TURNSTILE_SECRET_KEY no configurada — saltando verificación')
-    return true
-  }
+  if (!secret) { console.warn('TURNSTILE_SECRET_KEY no configurada'); return true }
   const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -26,89 +14,56 @@ async function verifyTurnstile(token: string): Promise<boolean> {
 }
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '127.0.0.1'
-  const { success } = await registroLimiter.limit(ip)
-  if (!success) {
-    return NextResponse.json({ error: 'Demasiados intentos. Esperá 10 minutos e intentá de nuevo.' }, { status: 429 })
-  }
-
   try {
     const body = await req.json()
     const { nombre, apellido, email, password, tipo, empresa, cuit, direccion, turnstileToken } = body
-
-    // Validaciones básicas
-    if (!nombre || !email || !password || !tipo) {
+    if (!nombre || !email || !password || !tipo)
       return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 })
-    }
-    if (password.length < 8) {
+    if (password.length < 8)
       return NextResponse.json({ error: 'La contraseña debe tener al menos 8 caracteres' }, { status: 400 })
-    }
-    if (tipo === 'wholesale' && (!empresa || !cuit)) {
+    if (tipo === 'wholesale' && (!empresa || !cuit))
       return NextResponse.json({ error: 'Empresa y CUIT son obligatorios para cuentas mayoristas' }, { status: 400 })
-    }
-
-    // Verificar Turnstile
-    if (!turnstileToken) {
+    if (!turnstileToken)
       return NextResponse.json({ error: 'Verificación de seguridad requerida' }, { status: 400 })
-    }
-    const captchaOk = await verifyTurnstile(turnstileToken)
-    if (!captchaOk) {
+    if (!await verifyTurnstile(turnstileToken))
       return NextResponse.json({ error: 'Verificación de seguridad fallida. Intentá de nuevo.' }, { status: 400 })
-    }
 
     const supabase = await createServerSupabase()
+    const tenantId = TENANT_ID()
 
-    // Crear usuario en Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: `${nombre} ${apellido ?? ''}`.trim(),
-          tipo,
-        },
-      },
+      email, password,
+      options: { data: { full_name: `${nombre} ${apellido ?? ''}`.trim(), tipo } },
     })
 
-    if (authError) {
-      if (authError.message.includes('already registered')) {
-        return NextResponse.json({ error: 'Ya existe una cuenta con ese email' }, { status: 409 })
-      }
+    let userId: string
+
+    if (authError?.message.includes('already registered')) {
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      if (signInError || !signInData.user)
+        return NextResponse.json(
+          { error: 'Ya existe una cuenta con ese email. Si ya compraste en otra tienda CreArt, usá la misma contraseña — o iniciá sesión.' },
+          { status: 409 }
+        )
+      userId = signInData.user.id
+      const { data: existing } = await supabase.from('customers').select('id').eq('id', userId).eq('tenant_id', tenantId).maybeSingle()
+      if (existing)
+        return NextResponse.json({ error: 'Ya tenés una cuenta en esta tienda. Iniciá sesión.' }, { status: 409 })
+    } else if (authError) {
       return NextResponse.json({ error: authError.message }, { status: 400 })
+    } else {
+      if (!authData.user) return NextResponse.json({ error: 'Error al crear el usuario' }, { status: 500 })
+      userId = authData.user.id
     }
 
-    if (!authData.user) {
-      return NextResponse.json({ error: 'Error al crear el usuario' }, { status: 500 })
-    }
-
-    // Insertar en tabla customers
     await supabase.from('customers').insert({
-      id: authData.user.id,
-      tenant_id: TENANT_ID(),
-      email,
-      full_name: nombre,
-      last_name: apellido ?? null,
-      company_name: empresa ?? null,
-      cuit: cuit ?? null,
-      phone: null,
-      type: tipo,
-      address_street: direccion ?? null,
-      active: true,
+      id: userId, tenant_id: tenantId, email,
+      full_name: nombre, last_name: apellido ?? null,
+      company_name: empresa ?? null, cuit: cuit ?? null,
+      phone: null, type: tipo, address_street: direccion ?? null, active: true,
     })
 
-    // Email de bienvenida (no bloqueante)
-    const storeUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
-    const { data: tenantData } = await supabase.from('tenants').select('name').eq('id', TENANT_ID()).single()
-    const storeName = (tenantData as any)?.name ?? 'Tienda'
-    sendEmail({
-      to: email,
-      subject: `Bienvenida a ${storeName}`,
-      html: emailBienvenidaCliente({ storeName, firstName: nombre, storeUrl }),
-    }).catch(() => {})
-
-    return NextResponse.json({ ok: true, confirmacion: !authData.session })
-    // confirmacion: true → Supabase requiere verificar email antes de poder iniciar sesión
-
+    return NextResponse.json({ ok: true, confirmacion: !authData?.session })
   } catch (err: any) {
     console.error('Error registro:', err)
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
