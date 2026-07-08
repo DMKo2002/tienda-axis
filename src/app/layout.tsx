@@ -9,14 +9,14 @@ export async function generateMetadata(): Promise<Metadata> {
     const supabase = await createServerSupabase()
     const [{ data: tenant }, { data: config }] = await Promise.all([
       supabase.from('tenants').select('name').eq('id', TENANT_ID()).maybeSingle(),
-      supabase.from('store_config').select('logo_url').eq('tenant_id', TENANT_ID()).maybeSingle(),
+      supabase.from('store_config').select('logo_url, favicon_url').eq('tenant_id', TENANT_ID()).maybeSingle(),
     ])
     const storeName = tenant?.name ?? 'Tienda'
-    const logoUrl = config?.logo_url ?? null
+    const faviconUrl = (config as any)?.favicon_url ?? config?.logo_url ?? null
     return {
       title: { default: storeName, template: `%s | ${storeName}` },
       description: 'Estilo que trasciende tendencia.',
-      ...(logoUrl ? { icons: { icon: logoUrl, apple: logoUrl } } : {}),
+      ...(faviconUrl ? { icons: { icon: faviconUrl, apple: faviconUrl } } : {}),
     }
   } catch {
     return {
