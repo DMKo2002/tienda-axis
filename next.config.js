@@ -10,12 +10,15 @@ const securityHeaders = [
 ]
 
 const nextConfig = {
+  transpilePackages: ['@creart/tienda-core'],
   async headers() {
     return [{ source: '/(.*)', headers: securityHeaders }]
   },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/v1/object/public/**' },
+      // Catch-all para imágenes de cualquier origen HTTPS (WooCommerce imports, etc.)
+      { protocol: 'https', hostname: '*' },
     ],
   },
 }
