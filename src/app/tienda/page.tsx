@@ -1,5 +1,4 @@
-import { cookies } from 'next/headers'
-import { createServerSupabase, TENANT_ID } from '@/lib/supabase-server'
+import { createServerSupabase, createServiceSupabase, TENANT_ID } from '@/lib/supabase-server'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import ProductCard from '@/components/shop/ProductCard'
@@ -12,6 +11,7 @@ interface Props {
     orden?: string
     q?: string
     color?: string
+    talle?: string
     precio_min?: string
     precio_max?: string
     descuento?: string
@@ -21,10 +21,6 @@ interface Props {
 export const metadata = { title: 'Tienda' }
 
 export default async function TiendaPage({ searchParams }: Props) {
-  // Read cookies synchronously BEFORE any await (cookies() loses context after await in Next.js 14)
-  const cookieStore = cookies()
-  const isLoggedIn = cookieStore.getAll().some(c => c.name.includes('-auth-token') && c.value.length > 10)
-
   const supabase = await createServerSupabase()
 
   const { data: tenant } = await supabase.from('tenants').select('name').eq('id', TENANT_ID()).single()
@@ -98,8 +94,13 @@ export default async function TiendaPage({ searchParams }: Props) {
     const wholesaleRule = product.variants?.[0]?.price_rules?.find(
       (p: any) => p.type === 'wholesale' && p.active
     )
-    const retailPrice: number | undefined = retailRule?.price
-    const retailCompareAt: number | undefined = retailRule?.compare_at_price ?? undefined
+    const retailRegular: number | undefined = retailRule?.price
+    const retailRebajado: number | undefined =
+      (retailRule?.compare_at_price > 0 && retailRule?.compare_at_price < (retailRule?.price ?? Infinity))
+        ? retailRule?.compare_at_price
+        : undefined
+    const retailPrice: number | undefined = retailRebajado ?? retailRegular  // precio efectivo (lo que paga)
+    const retailCompareAt: number | undefined = retailRebajado ? retailRegular : undefined  // precio tachado
     const wholesalePrice: number | undefined = wholesaleRule?.price
 
     const colors = [...new Set((product.variants ?? []).map((v: any) => v.color).filter(Boolean))] as string[]
@@ -114,6 +115,14 @@ export default async function TiendaPage({ searchParams }: Props) {
     const colorFilter = searchParams.color.toLowerCase().trim()
     products = products.filter((p: any) =>
       p.colors.some((c: string) => c.toLowerCase().trim() === colorFilter)
+    )
+  }
+
+  // Filter by size
+  if (searchParams.talle) {
+    const talleFilter = searchParams.talle.toUpperCase().trim()
+    products = products.filter((p: any) =>
+      p.sizes.some((s: string) => s.toUpperCase().trim() === talleFilter)
     )
   }
 
@@ -149,6 +158,23 @@ export default async function TiendaPage({ searchParams }: Props) {
     )
   )].sort() as string[]
 
+  // Available sizes for filter sidebar — sorted in standard clothing order
+  const SIZE_ORDER = ['XS','S','M','L','XL','XXL','XXXL','3XL','4XL']
+  const allSizes = [...new Set(
+    (allProducts ?? []).flatMap((p: any) =>
+      (p.variants ?? []).map((v: any) => v.size).filter(Boolean)
+    )
+  )].sort((a: any, b: any) => {
+    const ai = SIZE_ORDER.indexOf(String(a).toUpperCase())
+    const bi = SIZE_ORDER.indexOf(String(b).toUpperCase())
+    if (ai !== -1 && bi !== -1) return ai - bi
+    if (ai !== -1) return -1
+    if (bi !== -1) return 1
+    const an = parseInt(a), bn = parseInt(b)
+    if (!isNaN(an) && !isNaN(bn)) return an - bn
+    return String(a).localeCompare(String(b))
+  }) as string[]
+
   // Count products per category (before any filter)
   const productCountByCat: Record<string, number> = {}
   ;(allProducts ?? []).forEach((p: any) => {
@@ -173,28 +199,42 @@ export default async function TiendaPage({ searchParams }: Props) {
   const storeName = tenant?.name ?? 'TIENDA'
   const priceVisibility = (config as any)?.price_visibility ?? 'all'
 
-  // Price visibility using isLoggedIn computed at top (before any await)
-  let showPrices = priceVisibility === 'all'
-  if (priceVisibility !== 'all') {
-    if (isLoggedIn) {
-      showPrices = priceVisibility === 'logged_in' ? true : false
-      if (priceVisibility === 'wholesale_only') {
-        try {
-          const tokenCookie = cookieStore.getAll().find(c => c.name.includes('-auth-token'))
-          if (tokenCookie) {
-            const parts = tokenCookie.value.split('.')
-            if (parts.length >= 2) {
-              const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString())
-              const email = payload?.email ?? ''
-              if (email) {
-                const { data: cust } = await supabase.from('customers').select('type').eq('email', email).eq('tenant_id', TENANT_ID()).single()
-                showPrices = cust?.type === 'wholesale'
-              }
-            }
+  let showPrices = false
+  let showWholesale = false
+  let isRetailUser = false  // logueado como retail en modo wholesale_only
+
+  if (priceVisibility === 'all') {
+    // Todos ven ambos precios (retail y mayorista) sin importar si están logueados
+    showPrices = true
+    showWholesale = true
+  } else {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const service = createServiceSupabase()
+        // Admin ve todo
+        const { data: adminUser } = await service.from('users').select('id').eq('email', user.email ?? '').eq('tenant_id', TENANT_ID()).limit(1)
+        if (adminUser && adminUser.length > 0) {
+          showPrices = true
+          showWholesale = true
+        } else {
+          // Service client bypasea RLS — necesario para customers importados (id ≠ auth.uid)
+          const { data: cust } = await service.from('customers').select('type').eq('email', user.email ?? '').eq('tenant_id', TENANT_ID()).maybeSingle()
+          const isWholesale = cust?.type === 'wholesale'
+          const isRegistered = !!cust
+          if (priceVisibility === 'logged_in') {
+            // Cualquier registrado ve precios retail; solo mayoristas ven precio mayorista
+            showPrices = isRegistered
+            showWholesale = isWholesale
+          } else if (priceVisibility === 'wholesale_only') {
+            // Solo mayoristas ven precios; retail logueado ve mensaje diferente
+            showPrices = isWholesale
+            showWholesale = isWholesale
+            isRetailUser = isRegistered && !isWholesale
           }
-        } catch { showPrices = false }
+        }
       }
-    }
+    } catch { /* si no hay sesión, mantener defaults */ }
   }
 
   return (
@@ -224,11 +264,13 @@ export default async function TiendaPage({ searchParams }: Props) {
               <CatalogFilters
                 categories={categoriesWithCount}
                 availableColors={allColors}
+                availableSizes={allSizes}
                 maxPrice={0}
                 currentCat={searchParams.cat}
                 currentOrden={searchParams.orden}
                 currentQ={searchParams.q}
                 currentColor={searchParams.color}
+                currentTalle={searchParams.talle}
                 currentPrecioMin={precioMin}
                 currentPrecioMax={precioMax}
                 currentDescuento={soloDescuento}
@@ -241,14 +283,16 @@ export default async function TiendaPage({ searchParams }: Props) {
               <MobileFilterDrawer
                 categories={categoriesWithCount}
                 availableColors={allColors}
+                availableSizes={allSizes}
                 currentCat={searchParams.cat}
                 currentOrden={searchParams.orden}
                 currentQ={searchParams.q}
                 currentColor={searchParams.color}
+                currentTalle={searchParams.talle}
                 currentPrecioMin={precioMin}
                 currentPrecioMax={precioMax}
                 currentDescuento={soloDescuento}
-                activeFilterCount={[searchParams.cat, searchParams.color, searchParams.precio_min, searchParams.precio_max, searchParams.descuento, searchParams.q].filter(Boolean).length}
+                activeFilterCount={[searchParams.cat, searchParams.color, searchParams.talle, searchParams.precio_min, searchParams.precio_max, searchParams.descuento, searchParams.q].filter(Boolean).length}
               />
               <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-12">
                 {products.map((product: any, i: number) => (
@@ -262,7 +306,9 @@ export default async function TiendaPage({ searchParams }: Props) {
                     retailCompareAt={product.retailCompareAt}
                     wholesalePrice={product.wholesalePrice}
                     showPrices={showPrices}
+                    showWholesale={showWholesale}
                     priceVisibility={priceVisibility}
+                    isRetailUser={isRetailUser}
                     colors={product.colors}
                     sizes={product.sizes}
                     index={i}
