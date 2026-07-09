@@ -1,6 +1,7 @@
 'use client'
 
 import { useCart } from '@/components/shop/CartContext'
+import { useCartValidation } from '@/components/shop/useCartValidation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import Link from 'next/link'
@@ -12,7 +13,7 @@ const formatPrice = (n: number) =>
   new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
 
 export default function CarritoPage() {
-  const { items, total, removeItem, updateQuantity, count } = useCart()
+  const { items, updateQuantity, count } = useCart()
   const [minOrder, setMinOrder] = useState<number | null>(null)
 
   useEffect(() => {
@@ -25,10 +26,7 @@ export default function CarritoPage() {
       .then(({ data }) => setMinOrder(data?.min_order_amount ?? null))
   }, [])
 
-  const hasMin = (minOrder ?? 0) > 0
-  const meetsMin = !hasMin || total >= minOrder!
-  const remaining = hasMin ? Math.max(0, minOrder! - total) : 0
-  const progress = hasMin ? Math.min(100, (total / minOrder!) * 100) : 100
+  const { removedCount, canCheckout, hasMin, meetsMin, remaining, progress } = useCartValidation(minOrder)
 
   return (
     <>
@@ -49,6 +47,14 @@ export default function CarritoPage() {
               </p>
             </div>
           </div>
+
+          {removedCount > 0 && (
+            <div className="mb-6 px-4 py-3 bg-amber-50 border border-amber-200 rounded text-sm text-amber-700">
+              {removedCount === 1
+                ? 'Se eliminó 1 producto sin stock del carrito.'
+                : `Se eliminaron ${removedCount} productos sin stock del carrito.`}
+            </div>
+          )}
 
           {items.length === 0 ? (
             <div className="py-24 text-center">
@@ -179,7 +185,7 @@ export default function CarritoPage() {
                     </div>
                   )}
 
-                  {meetsMin ? (
+                  {canCheckout ? (
                     <Link
                       href="/checkout"
                       className="block w-full py-4 bg-[var(--color-charcoal)] text-white text-xs tracking-[0.2em] uppercase text-center hover:bg-[var(--color-stone)] transition-colors"
@@ -191,9 +197,11 @@ export default function CarritoPage() {
                       <div className="w-full py-4 bg-[var(--color-border)] text-[var(--color-stone)] text-xs tracking-[0.2em] uppercase text-center cursor-not-allowed">
                         Finalizar compra
                       </div>
-                      <p className="text-[10px] text-[var(--color-stone)] text-center mt-2">
-                        Mínimo de compra: {formatPrice(minOrder!)}
-                      </p>
+                      {hasMin && !meetsMin && (
+                        <p className="text-[10px] text-[var(--color-stone)] text-center mt-2">
+                          Mínimo de compra: {formatPrice(minOrder!)}
+                        </p>
+                      )}
                     </div>
                   )}
 
