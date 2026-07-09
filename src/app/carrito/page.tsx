@@ -88,9 +88,19 @@ export default function CarritoPage() {
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-light text-[var(--color-charcoal)] truncate">{item.productName}</p>
-                      {item.variantDesc && (
+                      {item.colorHex !== undefined ? (
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          {item.color && (
+                            <span
+                              style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: item.colorHex, border: '1px solid rgba(0,0,0,0.1)', flexShrink: 0, display: 'inline-block' }}
+                              title={item.color}
+                            />
+                          )}
+                          {item.size && <span className="text-xs text-[var(--color-stone)]">{item.size}</span>}
+                        </div>
+                      ) : item.variantDesc ? (
                         <p className="text-xs text-[var(--color-stone)] mt-0.5">{item.variantDesc}</p>
-                      )}
+                      ) : null}
                       {item.priceType === 'wholesale' && (
                         <span className="inline-block mt-1 text-[10px] tracking-wider uppercase bg-[#F2EEE9] text-[var(--color-stone)] px-2 py-0.5">
                           Precio mayorista
