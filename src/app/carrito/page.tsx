@@ -13,7 +13,7 @@ const formatPrice = (n: number) =>
   new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
 
 export default function CarritoPage() {
-  const { items, removeItem, updateQuantity, count } = useCart()
+  const { items, total, removeItem, updateQuantity, count } = useCart()
   const [minOrder, setMinOrder] = useState<number | null>(null)
 
   useEffect(() => {
