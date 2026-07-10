@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Turnstile from 'react-turnstile'
@@ -17,6 +17,7 @@ export default function RegistroPage() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [turnstileKey, setTurnstileKey] = useState(0)
   const [exito, setExito] = useState(false)
 
   function set(field: string, value: string) {
@@ -54,7 +55,12 @@ export default function RegistroPage() {
         }),
       })
       const data = await res.json()
-      if (!res.ok) { setError(data.error); return }
+      if (!res.ok) {
+        setError(data.error)
+        setTurnstileToken(null)
+        setTurnstileKey(k => k + 1)
+        return
+      }
       setExito(true)
     } catch {
       setError('Error de conexión. Intentá de nuevo.')
@@ -195,6 +201,7 @@ export default function RegistroPage() {
           {/* Turnstile */}
           <div className="flex justify-center py-2">
             <Turnstile
+              key={turnstileKey}
               sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '1x00000000000000000000AA'}
               onVerify={token => setTurnstileToken(token)}
               onExpire={() => setTurnstileToken(null)}
