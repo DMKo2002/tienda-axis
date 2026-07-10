@@ -62,7 +62,7 @@ export default async function ProductoPage({ params }: Props) {
   const { data: tenant } = await supabase.from('tenants').select('name').eq('id', TENANT_ID()).single()
   const { data: config } = await supabase
     .from('store_config')
-    .select('logo_url, whatsapp_number, notification_email, price_visibility')
+    .select('logo_url, whatsapp_number, notification_email, price_visibility, ignore_stock')
     .eq('tenant_id', TENANT_ID())
     .single()
 
@@ -85,6 +85,7 @@ export default async function ProductoPage({ params }: Props) {
 
   // Price visibility check — use getSession to avoid cookie writes in Server Components
   const priceVisibility = (config as any)?.price_visibility ?? 'all'
+  const ignoreStock = Boolean((config as any)?.ignore_stock)
   let showPrices = priceVisibility === 'all'
   if (priceVisibility !== 'all') {
     try {
@@ -170,7 +171,6 @@ export default async function ProductoPage({ params }: Props) {
                     {wholesaleRule && (
                       <p className="text-sm text-[var(--color-stone)] mt-1">
                         Precio mayorista: {formatPrice(wholesaleRule.price)}
-                        <span className="ml-1 text-xs">(x{wholesaleRule.min_qty}+)</span>
                       </p>
                     )}
                   </>
@@ -200,6 +200,7 @@ export default async function ProductoPage({ params }: Props) {
                 sizes={sizes as string[]}
                 colors={colors as string[]}
                 showPrices={showPrices}
+                ignoreStock={ignoreStock}
               />
 
               {/* Separador */}
