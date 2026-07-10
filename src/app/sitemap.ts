@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { headers } from 'next/headers'
 import { getTenantId } from '@/lib/supabase-server'
 
 // Sitemap dinámico — se regenera con cada build o con revalidación
@@ -9,9 +10,23 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000').replace(/\/$/, '')
+// El dominio varía por tenant (custom domain) — no se puede fijar con un env var
+// estático compartido por todo el deploy. Se arma desde el host real del request,
+// con NEXT_PUBLIC_APP_URL solo como fallback (local/build sin request).
+function getBaseUrl(): string {
+  try {
+    const h = headers()
+    const host = h.get('x-forwarded-host') ?? h.get('host')
+    if (host && !host.includes('localhost') && !host.startsWith('127.')) {
+      const proto = h.get('x-forwarded-proto') ?? 'https'
+      return `${proto}://${host}`
+    }
+  } catch {}
+  return (process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000').replace(/\/$/, '')
+}
 
 export default async function sitemap() {
+  const BASE_URL = getBaseUrl()
   const [{ data: products }, { data: categories }] = await Promise.all([
     supabase
       .from('products')
