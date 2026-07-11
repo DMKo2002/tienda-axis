@@ -16,6 +16,7 @@ export async function generateMetadata({ params }: Props) {
     supabase
       .from('products')
       .select('name, description, product_images(url, is_cover, sort_order)')
+      .eq('tenant_id', TENANT_ID())
       .eq('slug', params.slug)
       .eq('active', true)
       .single(),
