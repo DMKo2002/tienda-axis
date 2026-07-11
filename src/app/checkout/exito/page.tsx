@@ -12,14 +12,12 @@ export default async function CheckoutExitoPage({
   const supabase = await createServerSupabase()
   const orderId = searchParams.order_id
 
-  // Actualizar estado del pedido si viene de MP
-  if (orderId) {
-    await supabase
-      .from('orders')
-      .update({ payment_status: 'paid', status: 'confirmed' })
-      .eq('id', orderId)
-      .eq('tenant_id', TENANT_ID())
-  }
+  // IMPORTANTE: esta página NO debe marcar el pedido como pagado. Es una
+  // página pública sin autenticación — cualquiera que tenga el order_id
+  // (visible apenas se crea el pedido, antes de pagar) podía visitar esta
+  // URL directamente y marcarse el pedido como "pagado" sin pagar nada.
+  // La confirmación real de pago vive exclusivamente en el webhook de MP
+  // (server-to-server, verificado contra la API de MercadoPago).
 
   const { data: tenant } = await supabase.from('tenants').select('name').eq('id', TENANT_ID()).single()
   const { data: config } = await supabase.from('store_config').select('logo_url, whatsapp_number, notification_email').eq('tenant_id', TENANT_ID()).single()
