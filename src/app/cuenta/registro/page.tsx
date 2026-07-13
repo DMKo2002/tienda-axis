@@ -230,4 +230,25 @@ export default function RegistroPage() {
 
           {error && (
             <p className="text-sm text-red-600 bg-red-50 border border-red-100 px-4 py-3">{error}</p>
-          
+          )}
+
+          <button
+            type="submit"
+            disabled={loading || !turnstileToken}
+            className="w-full py-3.5 bg-[var(--color-charcoal)] text-white text-[11px] tracking-[0.2em] uppercase hover:bg-[var(--color-stone)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Creando cuenta...' : 'Crear cuenta'}
+          </button>
+
+          <p className="text-center text-sm text-[var(--color-stone)] font-light">
+            ¿Ya tenés cuenta?{' '}
+            <Link href="/cuenta/login" className="text-[var(--color-charcoal)] underline hover:text-[var(--color-stone)] transition-colors">
+              Iniciar sesión
+            </Link>
+          </p>
+
+        </form>
+      </div>
+    </div>
+  )
+}
