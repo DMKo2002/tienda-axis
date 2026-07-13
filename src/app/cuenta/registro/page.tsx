@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Turnstile from 'react-turnstile'
+import { createClient, TENANT_ID } from '@/lib/supabase'
 
 type Tipo = 'retail' | 'wholesale'
 
@@ -19,6 +20,22 @@ export default function RegistroPage() {
   const [error, setError] = useState<string | null>(null)
   const [turnstileKey, setTurnstileKey] = useState(0)
   const [exito, setExito] = useState(false)
+  const [regVisibility, setRegVisibility] = useState<'both' | 'retail_only' | 'wholesale_only'>('both')
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase
+      .from('store_config')
+      .select('registration_visibility')
+      .eq('tenant_id', TENANT_ID())
+      .single()
+      .then(({ data }) => {
+        const rv = ((data as any)?.registration_visibility ?? 'both') as typeof regVisibility
+        setRegVisibility(rv)
+        if (rv === 'retail_only') setTipo('retail')
+        if (rv === 'wholesale_only') setTipo('wholesale')
+      })
+  }, [])
 
   function set(field: string, value: string) {
     setForm(f => ({ ...f, [field]: value }))
@@ -102,23 +119,25 @@ export default function RegistroPage() {
           <h1 className="font-display text-4xl font-light text-[var(--color-charcoal)] mt-4">Crear cuenta</h1>
         </div>
 
-        {/* Selector de tipo */}
-        <div className="flex mb-8 border border-[var(--color-border)]">
-          <button
-            type="button"
-            onClick={() => setTipo('retail')}
-            className={`flex-1 py-3 text-sm tracking-[0.1em] uppercase transition-colors ${tipo === 'retail' ? 'bg-[var(--color-charcoal)] text-white' : 'text-[var(--color-stone)] hover:text-[var(--color-charcoal)]'}`}
-          >
-            Minorista
-          </button>
-          <button
-            type="button"
-            onClick={() => setTipo('wholesale')}
-            className={`flex-1 py-3 text-sm tracking-[0.1em] uppercase transition-colors ${tipo === 'wholesale' ? 'bg-[var(--color-charcoal)] text-white' : 'text-[var(--color-stone)] hover:text-[var(--color-charcoal)]'}`}
-          >
-            Mayorista
-          </button>
-        </div>
+        {/* Selector de tipo — oculto si la tienda solo permite un tipo de cuenta */}
+        {regVisibility === 'both' && (
+          <div className="flex mb-8 border border-[var(--color-border)]">
+            <button
+              type="button"
+              onClick={() => setTipo('retail')}
+              className={`flex-1 py-3 text-sm tracking-[0.1em] uppercase transition-colors ${tipo === 'retail' ? 'bg-[var(--color-charcoal)] text-white' : 'text-[var(--color-stone)] hover:text-[var(--color-charcoal)]'}`}
+            >
+              Minorista
+            </button>
+            <button
+              type="button"
+              onClick={() => setTipo('wholesale')}
+              className={`flex-1 py-3 text-sm tracking-[0.1em] uppercase transition-colors ${tipo === 'wholesale' ? 'bg-[var(--color-charcoal)] text-white' : 'text-[var(--color-stone)] hover:text-[var(--color-charcoal)]'}`}
+            >
+              Mayorista
+            </button>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
 
@@ -211,25 +230,4 @@ export default function RegistroPage() {
 
           {error && (
             <p className="text-sm text-red-600 bg-red-50 border border-red-100 px-4 py-3">{error}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading || !turnstileToken}
-            className="w-full py-3.5 bg-[var(--color-charcoal)] text-white text-[11px] tracking-[0.2em] uppercase hover:bg-[var(--color-stone)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Creando cuenta...' : 'Crear cuenta'}
-          </button>
-
-          <p className="text-center text-sm text-[var(--color-stone)] font-light">
-            ¿Ya tenés cuenta?{' '}
-            <Link href="/cuenta/login" className="text-[var(--color-charcoal)] underline hover:text-[var(--color-stone)] transition-colors">
-              Iniciar sesión
-            </Link>
-          </p>
-
-        </form>
-      </div>
-    </div>
-  )
-}
+          
