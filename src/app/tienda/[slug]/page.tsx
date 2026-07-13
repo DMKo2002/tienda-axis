@@ -96,10 +96,13 @@ export default async function ProductoPage({ params }: Props) {
         if (priceVisibility === 'logged_in') {
           showPrices = true
         } else if (priceVisibility === 'wholesale_only') {
+          // auth_user_id (no email): el mail de Auth puede ser "disfrazado" por
+          // tienda (ver lib/auth-email.ts) y ya no coincide con customers.email
+          // para cuentas nuevas.
           const { data: customer } = await supabase
             .from('customers')
             .select('type')
-            .eq('email', user.email ?? '')
+            .eq('auth_user_id', user.id)
             .eq('tenant_id', TENANT_ID())
             .single()
           showPrices = customer?.type === 'wholesale'

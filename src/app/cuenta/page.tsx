@@ -59,7 +59,7 @@ export default async function CuentaPage() {
                 {isMayorista ? 'Cuenta Mayorista' : 'Mi Cuenta'}
               </p>
               <h1 className="font-display text-4xl font-light text-[var(--color-charcoal)]">
-                Hola, {customer?.full_name ?? user!.email}
+                Hola, {customer?.full_name ?? customer?.email ?? 'Cliente'}
               </h1>
               {isMayorista && customer?.company_name && (
                 <p className="text-sm text-[var(--color-stone)] mt-1">{customer.company_name}</p>
@@ -74,7 +74,7 @@ export default async function CuentaPage() {
               <p className="text-[10px] tracking-[0.2em] uppercase text-[var(--color-stone)] mb-3">Datos personales</p>
               <div className="space-y-1 text-sm text-[var(--color-charcoal)] font-light">
                 <p>{customer?.full_name}</p>
-                <p className="text-[var(--color-stone)]">{user!.email}</p>
+                <p className="text-[var(--color-stone)]">{customer?.email ?? user!.email}</p>
                 {customer?.phone && <p>{customer.phone}</p>}
               </div>
             </div>

@@ -218,8 +218,10 @@ export default async function TiendaPage({ searchParams }: Props) {
           showPrices = true
           showWholesale = true
         } else {
-          // Service client bypasea RLS — necesario para customers importados (id ≠ auth.uid)
-          const { data: cust } = await service.from('customers').select('type').eq('email', user.email ?? '').eq('tenant_id', TENANT_ID()).maybeSingle()
+          // Service client bypasea RLS. Usar auth_user_id (no email): el mail de
+          // Auth puede ser "disfrazado" por tienda (ver lib/auth-email.ts) y ya
+          // no coincide con customers.email para cuentas nuevas.
+          const { data: cust } = await service.from('customers').select('type').eq('auth_user_id', user.id).eq('tenant_id', TENANT_ID()).maybeSingle()
           const isWholesale = cust?.type === 'wholesale'
           const isRegistered = !!cust
           if (priceVisibility === 'logged_in') {

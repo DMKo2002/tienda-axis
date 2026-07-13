@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { createBrowserClient } from '@supabase/ssr'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -12,26 +11,20 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
     setLoading(true)
 
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+    const data = await res.json()
 
-    if (authError) {
-      if (authError.message.includes('Invalid login') || authError.message.includes('invalid')) {
-        setError('Email o contraseña incorrectos')
-      } else if (authError.message.includes('Email not confirmed')) {
-        setError('Confirmá tu email antes de iniciar sesión. Revisá tu bandeja de entrada.')
-      } else {
-        setError(authError.message)
-      }
+    if (!res.ok) {
+      setError(data.error ?? 'No se pudo iniciar sesión')
       setLoading(false)
       return
     }
