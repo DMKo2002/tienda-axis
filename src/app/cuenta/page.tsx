@@ -77,6 +77,14 @@ export default async function CuentaPage() {
                 <p className="text-[var(--color-stone)]">{customer?.email ?? user!.email}</p>
                 {customer?.phone && <p>{customer.phone}</p>}
               </div>
+              {!isMayorista && (
+                <Link
+                  href="/cuenta/registro?upgrade=1"
+                  className="inline-block mt-4 text-xs tracking-[0.15em] uppercase text-[var(--color-charcoal)] underline hover:text-[var(--color-stone)] transition-colors"
+                >
+                  Pasate a Mayorista
+                </Link>
+              )}
             </div>
             {isMayorista && (
               <div className="border border-[var(--color-border)] p-5">

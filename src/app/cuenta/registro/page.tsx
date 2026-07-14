@@ -1,15 +1,17 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Turnstile from 'react-turnstile'
 import { createClient, TENANT_ID } from '@/lib/supabase'
 
 type Tipo = 'retail' | 'wholesale'
 
-export default function RegistroPage() {
+function RegistroForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const isUpgrade = searchParams.get('upgrade') === '1'
   const [tipo, setTipo] = useState<Tipo>('retail')
   const [form, setForm] = useState({
     nombre: '', apellido: '', email: '', password: '', confirmar: '',
@@ -32,10 +34,33 @@ export default function RegistroPage() {
       .then(({ data }) => {
         const rv = ((data as any)?.registration_visibility ?? 'both') as typeof regVisibility
         setRegVisibility(rv)
-        if (rv === 'retail_only') setTipo('retail')
-        if (rv === 'wholesale_only') setTipo('wholesale')
+        if (rv === 'retail_only' && !isUpgrade) setTipo('retail')
+        if (rv === 'wholesale_only' && !isUpgrade) setTipo('wholesale')
       })
   }, [])
+
+  // Upgrade de minorista a mayorista: precarga los datos que ya tenemos de la
+  // cuenta logueada y fuerza el formulario a mayorista.
+  useEffect(() => {
+    if (!isUpgrade) return
+    setTipo('wholesale')
+    const supabase = createClient()
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      const { data: cust } = await supabase
+        .from('customers')
+        .select('full_name, last_name, email')
+        .eq('auth_user_id', user.id)
+        .eq('tenant_id', TENANT_ID())
+        .maybeSingle()
+      setForm(f => ({
+        ...f,
+        nombre: cust?.full_name ?? f.nombre,
+        apellido: (cust as any)?.last_name ?? f.apellido,
+        email: cust?.email ?? user.email ?? f.email,
+      }))
+    })
+  }, [isUpgrade])
 
   function set(field: string, value: string) {
     setForm(f => ({ ...f, [field]: value }))
@@ -95,12 +120,17 @@ export default function RegistroPage() {
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <h1 className="font-display text-3xl font-light text-[var(--color-charcoal)] mb-3">¡Registro exitoso!</h1>
+          <h1 className="font-display text-3xl font-light text-[var(--color-charcoal)] mb-3">
+            {isUpgrade ? '¡Cuenta actualizada!' : '¡Registro exitoso!'}
+          </h1>
           <p className="text-sm text-[var(--color-stone)] font-light leading-relaxed mb-6">
-            Te enviamos un email de confirmación a <strong>{form.email}</strong>. Revisá tu bandeja de entrada para activar tu cuenta.
+            {isUpgrade
+              ? <>Tu cuenta ahora es mayorista. Ya podés ver los precios y condiciones de mayorista.</>
+              : <>Te enviamos un email de confirmación a <strong>{form.email}</strong>. Revisá tu bandeja de entrada para activar tu cuenta.</>
+            }
           </p>
-          <Link href="/cuenta/login" className="text-sm text-[var(--color-charcoal)] underline hover:text-[var(--color-stone)] transition-colors">
-            Ir al inicio de sesión
+          <Link href={isUpgrade ? '/cuenta' : '/cuenta/login'} className="text-sm text-[var(--color-charcoal)] underline hover:text-[var(--color-stone)] transition-colors">
+            {isUpgrade ? 'Ir a mi cuenta' : 'Ir al inicio de sesión'}
           </Link>
         </div>
       </div>
@@ -116,11 +146,13 @@ export default function RegistroPage() {
           <Link href="/tienda" className="text-xs tracking-[0.2em] uppercase text-[var(--color-stone)] hover:text-[var(--color-charcoal)] transition-colors">
             ← Volver a la tienda
           </Link>
-          <h1 className="font-display text-4xl font-light text-[var(--color-charcoal)] mt-4">Crear cuenta</h1>
+          <h1 className="font-display text-4xl font-light text-[var(--color-charcoal)] mt-4">
+            {isUpgrade ? 'Pasate a Mayorista' : 'Crear cuenta'}
+          </h1>
         </div>
 
-        {/* Selector de tipo — oculto si la tienda solo permite un tipo de cuenta */}
-        {regVisibility === 'both' && (
+        {/* Selector de tipo — oculto si la tienda solo permite un tipo de cuenta, o si es un upgrade */}
+        {regVisibility === 'both' && !isUpgrade && (
           <div className="flex mb-8 border border-[var(--color-border)]">
             <button
               type="button"
@@ -192,8 +224,9 @@ export default function RegistroPage() {
             <label className="block text-[10px] tracking-[0.15em] uppercase text-[var(--color-stone)] mb-1.5">Email *</label>
             <input
               type="email"
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] bg-white text-sm focus:outline-none focus:border-[var(--color-charcoal)] transition-colors"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] bg-white text-sm focus:outline-none focus:border-[var(--color-charcoal)] transition-colors disabled:bg-zinc-100 disabled:text-[var(--color-stone)]"
               value={form.email} onChange={e => set('email', e.target.value)} required
+              readOnly={isUpgrade} disabled={isUpgrade}
             />
           </div>
 
@@ -237,18 +270,28 @@ export default function RegistroPage() {
             disabled={loading || !turnstileToken}
             className="w-full py-3.5 bg-[var(--color-charcoal)] text-white text-[11px] tracking-[0.2em] uppercase hover:bg-[var(--color-stone)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Creando cuenta...' : 'Crear cuenta'}
+            {loading ? 'Guardando...' : isUpgrade ? 'Actualizar a mayorista' : 'Crear cuenta'}
           </button>
 
-          <p className="text-center text-sm text-[var(--color-stone)] font-light">
-            ¿Ya tenés cuenta?{' '}
-            <Link href="/cuenta/login" className="text-[var(--color-charcoal)] underline hover:text-[var(--color-stone)] transition-colors">
-              Iniciar sesión
-            </Link>
-          </p>
+          {!isUpgrade && (
+            <p className="text-center text-sm text-[var(--color-stone)] font-light">
+              ¿Ya tenés cuenta?{' '}
+              <Link href="/cuenta/login" className="text-[var(--color-charcoal)] underline hover:text-[var(--color-stone)] transition-colors">
+                Iniciar sesión
+              </Link>
+            </p>
+          )}
 
         </form>
       </div>
     </div>
+  )
+}
+
+export default function RegistroPage() {
+  return (
+    <Suspense>
+      <RegistroForm />
+    </Suspense>
   )
 }
