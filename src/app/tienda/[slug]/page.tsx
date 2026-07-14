@@ -63,7 +63,7 @@ export default async function ProductoPage({ params }: Props) {
   const { data: tenant } = await supabase.from('tenants').select('name').eq('id', TENANT_ID()).single()
   const { data: config } = await supabase
     .from('store_config')
-    .select('logo_url, whatsapp_number, notification_email, price_visibility, ignore_stock')
+    .select('logo_url, whatsapp_number, notification_email, price_visibility, ignore_stock, min_qty_per_variant')
     .eq('tenant_id', TENANT_ID())
     .single()
 
@@ -167,11 +167,15 @@ export default async function ProductoPage({ params }: Props) {
               <div className="mb-8">
                 {showPrices ? (
                   <>
-                    {retailRule && (
+                    {retailRule?.price ? (
                       <p className="text-2xl font-light text-[var(--color-charcoal)]">
                         {formatPrice(retailRule.price)}
                       </p>
-                    )}
+                    ) : !wholesaleRule ? (
+                      <p className="text-sm text-[var(--color-stone)]">
+                        Producto solo por mayor
+                      </p>
+                    ) : null}
                     {wholesaleRule && (
                       <p className="text-sm text-[var(--color-stone)] mt-1">
                         Precio mayorista: {formatPrice(wholesaleRule.price)}
@@ -205,6 +209,7 @@ export default async function ProductoPage({ params }: Props) {
                 colors={colors as string[]}
                 showPrices={showPrices}
                 ignoreStock={ignoreStock}
+                minQty={(product as any).min_qty ?? (config as any)?.min_qty_per_variant ?? 1}
               />
 
               {/* Separador */}
