@@ -106,8 +106,15 @@ export default async function TiendaPage({ searchParams }: Props) {
     const colors = [...new Set((product.variants ?? []).map((v: any) => v.color).filter(Boolean))] as string[]
     const sizes = [...new Set((product.variants ?? []).map((v: any) => v.size).filter(Boolean))] as string[]
     const cover = product.product_images?.find((img: any) => img.is_cover) ?? product.product_images?.[0]
+    // Todas las imágenes ordenadas (portada primero) — habilita el mini carousel al hoverear en ProductCard
+    const sortedImages = [...(product.product_images ?? [])].sort((a: any, b: any) => {
+      if (a.is_cover) return -1
+      if (b.is_cover) return 1
+      return (a.sort_order ?? 0) - (b.sort_order ?? 0)
+    })
+    const images = sortedImages.map((img: any) => img.url).filter(Boolean)
 
-    return { ...product, retailPrice, retailCompareAt, wholesalePrice, colors, sizes, cover }
+    return { ...product, retailPrice, retailCompareAt, wholesalePrice, colors, sizes, cover, images }
   })
 
   // Filter by color
@@ -304,6 +311,7 @@ export default async function TiendaPage({ searchParams }: Props) {
                     name={product.name}
                     slug={product.slug}
                     coverUrl={product.cover?.url}
+                    images={product.images}
                     retailPrice={product.retailPrice}
                     retailCompareAt={product.retailCompareAt}
                     wholesalePrice={product.wholesalePrice}
