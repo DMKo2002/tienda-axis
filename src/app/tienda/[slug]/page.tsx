@@ -112,11 +112,18 @@ export default async function ProductoPage({ params }: Props) {
   }
 
   // Agrupar variantes por talle y color
-  const sizes = [...new Set((product.variants ?? []).map((v: any) => v.size).filter(Boolean))]
-  const colors = [...new Set((product.variants ?? []).map((v: any) => v.color).filter(Boolean))]
+  // Una variante sin ningún price_rule activo con precio > 0 no es una opción
+  // real de compra — se trata como si no existiera en la tienda (no aparece
+  // como talle/color seleccionable), aunque el registro siga en la base.
+  const pricedVariants = (product.variants ?? []).filter((v: any) =>
+    (v.price_rules ?? []).some((r: any) => r.active && (r.price ?? 0) > 0)
+  )
 
-  const retailRule = product.variants?.[0]?.price_rules?.find((p: any) => p.type === 'retail' && p.active)
-  const wholesaleRule = product.variants?.[0]?.price_rules?.find((p: any) => p.type === 'wholesale' && p.active)
+  const sizes = [...new Set(pricedVariants.map((v: any) => v.size).filter(Boolean))]
+  const colors = [...new Set(pricedVariants.map((v: any) => v.color).filter(Boolean))]
+
+  const retailRule = pricedVariants[0]?.price_rules?.find((p: any) => p.type === 'retail' && p.active)
+  const wholesaleRule = pricedVariants[0]?.price_rules?.find((p: any) => p.type === 'wholesale' && p.active)
 
   const coverImage = images[0]?.url ?? null
   const retailPrice = retailRule?.price
@@ -202,7 +209,7 @@ export default async function ProductoPage({ params }: Props) {
                 product={{
                   id: product.id,
                   name: product.name,
-                  variants: product.variants ?? [],
+                  variants: pricedVariants,
                   coverUrl: images[0]?.url ?? null,
                 }}
                 sizes={sizes as string[]}

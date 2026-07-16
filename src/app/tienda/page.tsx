@@ -88,10 +88,17 @@ export default async function TiendaPage({ searchParams }: Props) {
   // ── Post-fetch JS filtering ─────────────────────────────
 
   let products = (allProducts ?? []).map((product: any) => {
-    const retailRule = product.variants?.[0]?.price_rules?.find(
+    // Una variante sin ningún price_rule activo con precio > 0 no es una
+    // opción real de compra — se ignora para calcular precio/colores/talles,
+    // aunque el registro siga en la base (celdas vacías del editor).
+    const pricedVariants = (product.variants ?? []).filter((v: any) =>
+      (v.price_rules ?? []).some((r: any) => r.active && (r.price ?? 0) > 0)
+    )
+
+    const retailRule = pricedVariants[0]?.price_rules?.find(
       (p: any) => p.type === 'retail' && p.active && (p.min_qty ?? 1) <= 1
     )
-    const wholesaleRule = product.variants?.[0]?.price_rules?.find(
+    const wholesaleRule = pricedVariants[0]?.price_rules?.find(
       (p: any) => p.type === 'wholesale' && p.active
     )
     const retailRegular: number | undefined = retailRule?.price
@@ -103,8 +110,8 @@ export default async function TiendaPage({ searchParams }: Props) {
     const retailCompareAt: number | undefined = retailRebajado ? retailRegular : undefined  // precio tachado
     const wholesalePrice: number | undefined = wholesaleRule?.price
 
-    const colors = [...new Set((product.variants ?? []).map((v: any) => v.color).filter(Boolean))] as string[]
-    const sizes = [...new Set((product.variants ?? []).map((v: any) => v.size).filter(Boolean))] as string[]
+    const colors = [...new Set(pricedVariants.map((v: any) => v.color).filter(Boolean))] as string[]
+    const sizes = [...new Set(pricedVariants.map((v: any) => v.size).filter(Boolean))] as string[]
     const cover = product.product_images?.find((img: any) => img.is_cover) ?? product.product_images?.[0]
     // Todas las imágenes ordenadas (portada primero) — habilita el mini carousel al hoverear en ProductCard
     const sortedImages = [...(product.product_images ?? [])].sort((a: any, b: any) => {
@@ -158,10 +165,13 @@ export default async function TiendaPage({ searchParams }: Props) {
   }
   // default: already ordered by created_at desc from Supabase
 
-  // Available colors for filter sidebar (from ALL products before color filter)
+  // Available colors for filter sidebar (from ALL products before color filter,
+  // solo variantes con precio cargado)
   const allColors = [...new Set(
     (allProducts ?? []).flatMap((p: any) =>
-      (p.variants ?? []).map((v: any) => v.color).filter(Boolean)
+      (p.variants ?? [])
+        .filter((v: any) => (v.price_rules ?? []).some((r: any) => r.active && (r.price ?? 0) > 0))
+        .map((v: any) => v.color).filter(Boolean)
     )
   )].sort() as string[]
 
@@ -169,7 +179,9 @@ export default async function TiendaPage({ searchParams }: Props) {
   const SIZE_ORDER = ['XS','S','M','L','XL','XXL','XXXL','3XL','4XL']
   const allSizes = [...new Set(
     (allProducts ?? []).flatMap((p: any) =>
-      (p.variants ?? []).map((v: any) => v.size).filter(Boolean)
+      (p.variants ?? [])
+        .filter((v: any) => (v.price_rules ?? []).some((r: any) => r.active && (r.price ?? 0) > 0))
+        .map((v: any) => v.size).filter(Boolean)
     )
   )].sort((a: any, b: any) => {
     const ai = SIZE_ORDER.indexOf(String(a).toUpperCase())
