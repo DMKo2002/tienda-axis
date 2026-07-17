@@ -5,10 +5,10 @@ import { createServerSupabase, TENANT_ID } from '@/lib/supabase-server'
 export const dynamic = 'force-dynamic'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import ProductCard from '@/components/shop/ProductCard'
+import ScrollReveal from '@/components/layout/ScrollReveal'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight } from 'lucide-react'
+import { IconArrowMono } from '@/components/icons/SocialIcons'
 
 export default async function HomePage() {
   // cookies() debe llamarse ANTES de cualquier await
@@ -26,7 +26,7 @@ export default async function HomePage() {
 
   const { data: config } = await supabase
     .from('store_config')
-    .select('logo_url, hero_image_url, hero_eyebrow, hero_title_line1, hero_title_italic, hero_title_line3, hero_season, hero_text_color, whatsapp_number, notification_email, instagram_url, facebook_url, tiktok_url, pickup_address, pickup_enabled, branches, price_visibility')
+    .select('logo_url, hero_image_url, hero_eyebrow, hero_title_line1, hero_title_italic, hero_title_line3, hero_subtitle, hero_season, hero_text_color, whatsapp_number, notification_email, instagram_url, facebook_url, tiktok_url, pickup_address, pickup_enabled, branches, price_visibility')
     .eq('tenant_id', TENANT_ID())
     .single()
 
@@ -52,192 +52,264 @@ export default async function HomePage() {
   const priceVisibility = (config as any)?.price_visibility ?? 'all'
   const showPrices = priceVisibility === 'all' || (priceVisibility === 'logged_in' && isLoggedIn)
 
+  // El hero de Axis es un video — se detecta por la extensión del archivo cargado en hero_image_url.
+  // Shortcut temporal: no hay slot de carga de video en el panel todavía (ver tarea pendiente),
+  // así que por ahora la URL se pega a mano en store_config.hero_image_url.
+  const heroIsVideo = !!config?.hero_image_url && /\.(mp4|webm|mov)(\?|$)/i.test(config.hero_image_url)
+
   return (
     <>
-      <Navbar storeName={storeName} logoUrl={config?.logo_url} />
+      <Navbar
+        storeName={storeName}
+        logoUrl={config?.logo_url}
+        instagramUrl={(config as any)?.instagram_url ?? undefined}
+        facebookUrl={(config as any)?.facebook_url ?? undefined}
+        tiktokUrl={(config as any)?.tiktok_url ?? undefined}
+      />
 
       <main>
 
-        {/* ── HERO ─────────────────────────────────────────────── */}
-        <section
-          className="relative min-h-screen flex items-end pb-20 overflow-hidden bg-[#EDE8E1]"
-          style={config?.hero_image_url ? {
-            backgroundImage: `url(${config.hero_image_url})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          } : undefined}
-        >
-          {/* Overlay oscuro cuando hay imagen */}
-          {config?.hero_image_url && (
-            <div className="absolute inset-0 bg-black/40" />
-          )}
+        {/* ── HERO CON VIDEO ──────────────────────────────────────── */}
+        {/* Proporciones del Figma de Axis: lienzo 1728×1117, columna izquierda 611px (35.36%), video 1117×1117 (64.64% × 100%) */}
+        <section className="relative bg-[var(--color-cream)] flex flex-col lg:grid lg:grid-cols-[35.36%_64.64%] lg:grid-rows-1 lg:aspect-[1728/1117]">
 
-          {/* Texto hero */}
-          {(() => {
-            const customColor = (config as any)?.hero_text_color
-            const textStyle = customColor ? { color: customColor } : undefined
-            const defaultEyebrowClass = config?.hero_image_url ? 'text-white/70' : 'text-[var(--color-stone)]'
-            const defaultTitleClass   = config?.hero_image_url ? 'text-white'    : 'text-[var(--color-charcoal)]'
-            const defaultLinkClass    = config?.hero_image_url
-              ? 'border-white/70 text-white hover:border-white hover:text-white/80'
-              : 'border-[var(--color-charcoal)] text-[var(--color-charcoal)] hover:text-[var(--color-stone)] hover:border-[var(--color-stone)]'
-            return (
-              <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
-                <div className="max-w-xl opacity-0 animate-fade-up delay-100">
-                  <p
-                    className={`text-xs tracking-[0.25em] uppercase mb-4 ${!customColor ? defaultEyebrowClass : ''}`}
-                    style={textStyle ? { color: customColor + 'B3' } : undefined}
-                  >
-                    {(config as any)?.hero_eyebrow ?? 'Nueva temporada'}
-                  </p>
-                  <h1
-                    className={`font-display text-6xl md:text-8xl font-light leading-none mb-8 ${!customColor ? defaultTitleClass : ''}`}
-                    style={textStyle}
-                  >
-                    {(config as any)?.hero_title_line1 ?? 'Estilo que'}<br />
-                    <em className="italic">{(config as any)?.hero_title_italic ?? 'trasciende'}</em><br />
-                    {(config as any)?.hero_title_line3 ?? 'tendencia'}
-                  </h1>
-                  <Link
-                    href="/tienda"
-                    className={`inline-flex items-center gap-3 text-xs tracking-[0.2em] uppercase border-b pb-1 transition-colors ${!customColor ? defaultLinkClass : ''}`}
-                    style={textStyle}
-                  >
-                    Ver colección <ArrowRight size={14} />
-                  </Link>
-                </div>
-              </div>
-            )
-          })()}
+            {/* Columna izquierda — el grid la estira al 100% de la fila */}
+            <div className="order-2 lg:order-1 w-full px-8 py-12 lg:px-10 lg:py-16 lg:h-full">
+              <div className="h-full flex flex-col gap-10">
 
-          {/* Número decorativo */}
-          <div className="absolute right-8 top-1/2 -translate-y-1/2 opacity-0 animate-fade-in delay-400 hidden lg:block">
-            <p className="font-display text-[200px] font-light text-[var(--color-charcoal)]/5 leading-none select-none">
-              {(config as any)?.hero_season ?? 'AW'}
-            </p>
-          </div>
-
-          {/* Línea vertical decorativa */}
-          <div className="absolute left-6 top-32 bottom-20 w-px bg-[var(--color-charcoal)]/10 hidden lg:block" />
-
-        </section>
-
-        {/* ── FEATURED COLLECTION ──────────────────────────────── */}
-        <section className="w-full px-6 py-24">
-
-          <div className="flex items-center justify-between mb-12">
-            <div>
-              <p className="text-xs tracking-[0.2em] uppercase text-[var(--color-stone)] mb-2">
-                Selección
-              </p>
-              <h2 className="font-display text-4xl font-light text-[var(--color-charcoal)]">
-                Featured Collection
-              </h2>
-            </div>
-            <Link
-              href="/tienda"
-              className="hidden md:inline-flex items-center gap-2 text-xs tracking-[0.15em] uppercase text-[var(--color-stone)] hover:text-[var(--color-charcoal)] transition-colors"
-            >
-              Ver todo <ArrowRight size={13} />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {products?.map((product: any, i: number) => {
-              const cover = product.product_images?.find((img: any) => img.is_cover) ?? product.product_images?.[0]
-              const retailPrice = product.variants?.[0]?.price_rules?.find((p: any) => p.type === 'retail' && p.active)?.price
-              const wholesalePrice = product.variants?.[0]?.price_rules?.find((p: any) => p.type === 'wholesale' && p.active)?.price
-
-              const colors = [...new Set((product.variants ?? []).map((v: any) => v.color).filter(Boolean))] as string[]
-              const sizes = [...new Set((product.variants ?? []).map((v: any) => v.size).filter(Boolean))] as string[]
-
-              return (
-                <ProductCard
-                  key={product.id}
-                  id={product.id}
-                  name={product.name}
-                  slug={product.slug}
-                  coverUrl={cover?.url}
-                  retailPrice={retailPrice}
-                  wholesalePrice={wholesalePrice}
-                  showPrices={showPrices}
-                  priceVisibility={priceVisibility}
-                  colors={colors}
-                  sizes={sizes}
-                  index={i}
-                />
-              )
-            })}
-
-            {(!products || products.length === 0) && (
-              <div className="col-span-4 py-20 text-center">
-                <p className="text-[var(--color-stone)] font-light">
-                  Los productos se mostrarán aquí
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Mobile ver todo */}
-          <div className="mt-10 text-center md:hidden">
-            <Link href="/tienda" className="inline-flex items-center gap-2 text-xs tracking-[0.15em] uppercase text-[var(--color-stone)]">
-              Ver todos los productos <ArrowRight size={13} />
-            </Link>
-          </div>
-
-        </section>
-
-        {/* ── BANNER INTERMEDIO ────────────────────────────────── */}
-        <section className="bg-[var(--color-charcoal)] py-24 px-6">
-          <div className="max-w-3xl mx-auto text-center">
-            <p className="text-xs tracking-[0.3em] uppercase text-white/40 mb-6">Los Destacados</p>
-            <h2 className="font-display text-5xl md:text-6xl font-light italic text-white leading-tight mb-8">
-              Conocé productos especialmente<br />elegidos para vos
-            </h2>
-            <Link
-              href="/tienda"
-              className="inline-flex items-center gap-3 text-xs tracking-[0.2em] uppercase text-white border-b border-white/30 pb-1 hover:border-white transition-colors"
-            >
-              Shop now <ArrowRight size={13} />
-            </Link>
-          </div>
-        </section>
-
-        {/* ── MOODBOARD ────────────────────────────────────────── */}
-        <section className="w-full px-6 py-24">
-          <div className="mb-10">
-            <p className="text-xs tracking-[0.2em] uppercase text-[var(--color-stone)] mb-2">Instagram</p>
-            <h2 className="font-display text-3xl font-light text-[var(--color-charcoal)]">MoodBoard</h2>
-            <p className="text-sm text-[var(--color-stone)] mt-2 font-light">
-              Descubrí nuestras selecciones diseñadas para destacar, redefiniendo la elegancia contemporánea
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {['#DDD5C8', '#C8CDD5', '#C8D5CC', '#D5C8CE'].map((bg, i) => {
-              const imgUrl = asset(`moodboard_${i + 1}`)
-              return (
-                <div
-                  key={i}
-                  className="aspect-square overflow-hidden opacity-0 animate-fade-up relative"
-                  style={{
-                    backgroundColor: bg,
-                    animationDelay: `${i * 100}ms`,
-                    animationFillMode: 'forwards'
-                  }}
-                >
-                  {imgUrl && (
-                    <Image
-                      src={imgUrl.split('?')[0]}
-                      alt={`Mood ${i + 1}`}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 50vw, 25vw"
+                {/* flex-1 + items-center centra el logo verticalmente respecto a la altura de la imagen del hero */}
+                <div className="flex-1 flex items-center justify-center opacity-0 animate-fade-in delay-100">
+                  {config?.logo_url ? (
+                    <img
+                      src={config.logo_url}
+                      alt={storeName}
+                      className="w-[150px] max-w-full h-auto object-contain"
                     />
+                  ) : (
+                    <div className="w-[150px] max-w-full h-[135px] border border-dashed border-[var(--color-charcoal)]/30 flex items-center justify-center">
+                      <span className="font-ui text-[10px] tracking-[0.15em] uppercase text-[var(--color-stone)] text-center px-4">
+                        Logo de la tienda
+                      </span>
+                    </div>
                   )}
                 </div>
-              )
-            })}
+
+                <div className="opacity-0 animate-fade-up delay-200">
+                  <p className="font-display text-lg leading-snug text-[var(--color-charcoal)] mb-8 whitespace-pre-line">
+                    {(config as any)?.hero_subtitle ?? 'Piezas únicas diseñadas para\nquienes buscan estilo y distinción.'}
+                  </p>
+
+                  <div className="flex items-center gap-5 flex-wrap font-ui">
+                    <Link
+                      href="/tienda"
+                      className="inline-flex items-center justify-center bg-[var(--color-charcoal)] text-white text-xs tracking-[0.15em] uppercase px-7 py-3 hover:opacity-90 transition-opacity"
+                    >
+                      Ver colección
+                    </Link>
+                    <Link
+                      href="/tienda"
+                      className="inline-flex items-center gap-2 text-xs tracking-[0.15em] uppercase text-[var(--color-charcoal)] border-b border-[var(--color-charcoal)] pb-1 hover:text-[var(--color-stone)] hover:border-[var(--color-stone)] transition-colors"
+                    >
+                      Tienda <IconArrowMono />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Columna derecha — el video ocupa el 100% de la altura de la sección */}
+            <div className="order-1 lg:order-2 w-full">
+              <div className="group relative w-full aspect-square lg:aspect-auto lg:h-full flex items-end overflow-hidden bg-[#FFFFFF]">
+                {heroIsVideo ? (
+                  <video
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    src={config!.hero_image_url!}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                  />
+                ) : config?.hero_image_url && (
+                  <div
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
+                    style={{ backgroundImage: `url(${config.hero_image_url})` }}
+                  />
+                )}
+                {config?.hero_image_url && (
+                  <div className="absolute inset-0 bg-black/20" />
+                )}
+
+                {(() => {
+                  const customColor = (config as any)?.hero_text_color
+                  const textStyle = customColor ? { color: customColor } : undefined
+                  const defaultEyebrowClass = config?.hero_image_url ? 'text-white/80' : 'text-[var(--color-stone)]'
+                  const defaultTitleClass   = config?.hero_image_url ? 'text-white'    : 'text-[var(--color-charcoal)]'
+                  return (
+                    <div className="relative z-10 px-8 pb-14 lg:px-16 lg:pb-20 opacity-0 animate-fade-up delay-100">
+                      <p
+                        className={`font-ui text-xs tracking-[0.25em] uppercase mb-4 ${!customColor ? defaultEyebrowClass : ''}`}
+                        style={textStyle ? { color: customColor + 'B3' } : undefined}
+                      >
+                        {(config as any)?.hero_eyebrow ?? 'Opening New Season Summer 2026'}
+                      </p>
+                      <h1
+                        className={`font-display text-5xl md:text-7xl font-semibold leading-[1.05] ${!customColor ? defaultTitleClass : ''}`}
+                        style={textStyle}
+                      >
+                        {(config as any)?.hero_title_line1 ?? 'Timeless Design'}<br />
+                        <em className="italic font-normal">{(config as any)?.hero_title_italic ?? 'Beyond Trends'}</em>
+                        {(config as any)?.hero_title_line3 && <><br />{(config as any).hero_title_line3}</>}
+                      </h1>
+                    </div>
+                  )
+                })()}
+              </div>
+            </div>
+
+        </section>
+
+        {/* ── FEATURES BAR (clonado de tienda-atelier) ─────────── */}
+        <section className="max-w-7xl mx-auto px-6 py-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            {[
+              { title: 'Envío a todo el país', desc: 'En compras que superen el monto mínimo. Entrega rápida y segura a todo el país.' },
+              { title: 'Compra Segura', desc: 'Garantizamos una experiencia de compra segura de principio a fin.' },
+              { title: 'Atención al cliente', desc: 'Estamos disponibles para ayudarte en todo momento por WhatsApp e email.' },
+            ].map((feat, i) => (
+              <div key={i} className="flex gap-4 items-start">
+                <div className="w-11 h-11 bg-[#F5F5F5] flex-shrink-0" />
+                <div>
+                  <h3 className="font-bold text-sm text-[var(--color-charcoal)] mb-1.5">{feat.title}</h3>
+                  <p className="text-xs leading-relaxed text-[#E07B39]">{feat.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── NEW ARRIVALS ──────────────────────────────────────── */}
+        {products && products.length > 0 && (
+          <section className="w-full px-6 py-24 text-center">
+            <h2 className="font-display text-4xl font-bold text-[var(--color-charcoal)] mb-2">
+              New Arrivals
+            </h2>
+            <p className="font-ui text-base text-[var(--color-charcoal)] mb-10">
+              {(config as any)?.hero_eyebrow ?? 'Opening New Season - Summer 2026'}
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-left">
+              {products.slice(0, 4).map((product: any) => {
+                const cover = product.product_images?.find((img: any) => img.is_cover) ?? product.product_images?.[0]
+                return (
+                  <Link key={product.id} href={`/tienda/${product.slug}`} className="product-img-wrap block aspect-[2/3] relative bg-[#FFFFFF] overflow-hidden">
+                    {cover?.url && (
+                      <Image
+                        src={cover.url.split('?')[0]}
+                        alt={product.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                      />
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* ── MOSAICO DE FOTOS (Frame 2) ────────────────────────── */}
+        {/* 864×1117 grande a la izquierda + 864×559 arriba der. + 2× 432×559 abajo der. */}
+        <section className="w-full grid grid-cols-2 lg:grid-rows-1 lg:aspect-[1728/1117]">
+          <ScrollReveal className="relative aspect-[3/4] lg:aspect-auto overflow-hidden bg-[#FFFFFF] img-hover-zoom">
+            {asset('gallery_1') && (
+              <Image
+                src={asset('gallery_1')!.split('?')[0]}
+                alt=""
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 50vw, 50vw"
+              />
+            )}
+          </ScrollReveal>
+          <div className="flex flex-col">
+            <ScrollReveal delay={100} className="relative flex-1 aspect-[3/2] lg:aspect-auto overflow-hidden bg-[#FFFFFF] img-hover-zoom">
+              {asset('gallery_2') && (
+                <Image
+                  src={asset('gallery_2')!.split('?')[0]}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="50vw"
+                />
+              )}
+            </ScrollReveal>
+            <div className="flex flex-1">
+              <ScrollReveal delay={200} className="relative flex-1 aspect-[3/4] lg:aspect-auto overflow-hidden bg-[#FFFFFF] img-hover-zoom">
+                {asset('gallery_3') && (
+                  <Image
+                    src={asset('gallery_3')!.split('?')[0]}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    sizes="25vw"
+                  />
+                )}
+              </ScrollReveal>
+              <ScrollReveal delay={300} className="relative flex-1 aspect-[3/4] lg:aspect-auto overflow-hidden bg-[#FFFFFF] img-hover-zoom">
+                {asset('gallery_4') && (
+                  <Image
+                    src={asset('gallery_4')!.split('?')[0]}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    sizes="25vw"
+                  />
+                )}
+              </ScrollReveal>
+            </div>
+          </div>
+        </section>
+
+        {/* ── MOODBOARD (Frame 4 del diseño): franja panorámica + 2 fotos ── */}
+        <section className="w-full">
+          <ScrollReveal className="relative w-full aspect-[1728/200] overflow-hidden bg-[#FFFFFF] img-hover-zoom">
+            {asset('moodboard_banner') && (
+              <Image
+                src={asset('moodboard_banner')!.split('?')[0]}
+                alt=""
+                fill
+                className="object-cover"
+                sizes="100vw"
+              />
+            )}
+            <div className="absolute inset-0 bg-black/10" />
+            <p className="absolute left-6 md:left-[88px] top-1/2 -translate-y-1/2 max-w-[85%] font-display text-lg md:text-3xl font-semibold text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.5)]">
+              Countless Attractive Offers Are Waiting For You
+            </p>
+          </ScrollReveal>
+          <div className="grid grid-cols-1 md:grid-cols-2">
+            <ScrollReveal delay={100} className="relative aspect-[860/573] overflow-hidden bg-[#FFFFFF] img-hover-zoom">
+              {asset('moodboard_left') && (
+                <Image
+                  src={asset('moodboard_left')!.split('?')[0]}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+              )}
+            </ScrollReveal>
+            <ScrollReveal delay={200} className="relative aspect-[860/573] overflow-hidden bg-[#FFFFFF] img-hover-zoom">
+              {asset('moodboard_right') && (
+                <Image
+                  src={asset('moodboard_right')!.split('?')[0]}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+              )}
+            </ScrollReveal>
           </div>
         </section>
 
