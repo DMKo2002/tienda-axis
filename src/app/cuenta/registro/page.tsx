@@ -70,7 +70,7 @@ function RegistroForm() {
     e.preventDefault()
     setError(null)
 
-    if (form.password !== form.confirmar) {
+    if (!isUpgrade && form.password !== form.confirmar) {
       setError('Las contraseñas no coinciden')
       return
     }
@@ -88,7 +88,7 @@ function RegistroForm() {
           nombre: form.nombre,
           apellido: form.apellido,
           email: form.email,
-          password: form.password,
+          password: isUpgrade ? undefined : form.password,
           tipo,
           empresa: form.empresa || undefined,
           cuit: form.cuit || undefined,
@@ -236,25 +236,30 @@ function RegistroForm() {
             />
           </div>
 
-          {/* Contraseña */}
-          <div>
-            <label className="block text-[10px] tracking-[0.15em] uppercase text-[var(--color-stone)] mb-1.5">Contraseña *</label>
-            <input
-              type="password"
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] bg-white text-sm focus:outline-none focus:border-[var(--color-charcoal)] transition-colors"
-              value={form.password} onChange={e => set('password', e.target.value)}
-              required minLength={8} placeholder="Mínimo 8 caracteres"
-            />
-          </div>
-          <div>
-            <label className="block text-[10px] tracking-[0.15em] uppercase text-[var(--color-stone)] mb-1.5">Confirmar Contraseña *</label>
-            <input
-              type="password"
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] bg-white text-sm focus:outline-none focus:border-[var(--color-charcoal)] transition-colors"
-              value={form.confirmar} onChange={e => set('confirmar', e.target.value)}
-              required minLength={8}
-            />
-          </div>
+          {/* El upgrade a mayorista usa la sesión ya iniciada para confirmar
+              identidad — no hace falta (ni tiene sentido) pedir contraseña acá. */}
+          {!isUpgrade && (
+            <>
+              <div>
+                <label className="block text-[10px] tracking-[0.15em] uppercase text-[var(--color-stone)] mb-1.5">Contraseña *</label>
+                <input
+                  type="password"
+                  className="w-full px-3 py-2.5 border border-[var(--color-border)] bg-white text-sm focus:outline-none focus:border-[var(--color-charcoal)] transition-colors"
+                  value={form.password} onChange={e => set('password', e.target.value)}
+                  required minLength={8} placeholder="Mínimo 8 caracteres"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] tracking-[0.15em] uppercase text-[var(--color-stone)] mb-1.5">Confirmar Contraseña *</label>
+                <input
+                  type="password"
+                  className="w-full px-3 py-2.5 border border-[var(--color-border)] bg-white text-sm focus:outline-none focus:border-[var(--color-charcoal)] transition-colors"
+                  value={form.confirmar} onChange={e => set('confirmar', e.target.value)}
+                  required minLength={8}
+                />
+              </div>
+            </>
+          )}
 
           {/* Turnstile */}
           <div className="flex justify-center py-2">

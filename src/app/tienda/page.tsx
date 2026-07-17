@@ -54,7 +54,7 @@ export default async function TiendaPage({ searchParams }: Props) {
   // Fetch all active products — we'll sort/filter with JS for price and discount
   let query = supabase
     .from('products')
-    .select('id, name, slug, category_id, product_images(*), variants(color, size, price_rules(type, price, compare_at_price, active, min_qty))')
+    .select('id, name, slug, category_id, product_images(*), variants(color, color_hex, size, price_rules(type, price, compare_at_price, active, min_qty))')
     .eq('tenant_id', TENANT_ID())
     .eq('active', true)
 
@@ -175,6 +175,16 @@ export default async function TiendaPage({ searchParams }: Props) {
     )
   )].sort() as string[]
 
+  // Hex real guardado por color (elegido con cuentagotas/selector en Panel
+  // Admin) — el filtro de colores lo usa con prioridad sobre su propio mapa
+  // de nombres, que es chico y no cubre toda la paleta que ofrece el editor.
+  const colorHexMap: Record<string, string> = {}
+  for (const p of allProducts ?? []) {
+    for (const v of p.variants ?? []) {
+      if (v.color && v.color_hex && !colorHexMap[v.color]) colorHexMap[v.color] = v.color_hex
+    }
+  }
+
   // Available sizes for filter sidebar — sorted in standard clothing order
   const SIZE_ORDER = ['XS','S','M','L','XL','XXL','XXXL','3XL','4XL']
   const allSizes = [...new Set(
@@ -285,6 +295,7 @@ export default async function TiendaPage({ searchParams }: Props) {
               <CatalogFilters
                 categories={categoriesWithCount}
                 availableColors={allColors}
+                colorHexMap={colorHexMap}
                 availableSizes={allSizes}
                 maxPrice={0}
                 currentCat={searchParams.cat}
@@ -304,6 +315,7 @@ export default async function TiendaPage({ searchParams }: Props) {
               <MobileFilterDrawer
                 categories={categoriesWithCount}
                 availableColors={allColors}
+                colorHexMap={colorHexMap}
                 availableSizes={allSizes}
                 currentCat={searchParams.cat}
                 currentOrden={searchParams.orden}
