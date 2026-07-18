@@ -179,25 +179,6 @@ export default async function HomePage() {
 
         </section>
 
-        {/* ── FEATURES BAR (clonado de tienda-atelier) ─────────── */}
-        <section className="max-w-7xl mx-auto px-6 pt-28 pb-16">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            {[
-              { title: 'Envío a todo el país', desc: 'En compras que superen el monto mínimo. Entrega rápida y segura a todo el país.' },
-              { title: 'Compra Segura', desc: 'Garantizamos una experiencia de compra segura de principio a fin.' },
-              { title: 'Atención al cliente', desc: 'Estamos disponibles para ayudarte en todo momento por WhatsApp e email.' },
-            ].map((feat, i) => (
-              <div key={i} className="flex gap-4 items-start">
-                <div className="w-11 h-11 bg-[#F5F5F5] flex-shrink-0" />
-                <div>
-                  <h3 className="font-bold text-sm text-[var(--color-charcoal)] mb-1.5">{feat.title}</h3>
-                  <p className="text-xs leading-relaxed text-[#E07B39]">{feat.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
         {/* ── NEW ARRIVALS ──────────────────────────────────────── */}
         {products && products.length > 0 && (
           <section className="w-full px-6 py-24 text-center">
@@ -278,6 +259,25 @@ export default async function HomePage() {
                 )}
               </ScrollReveal>
             </div>
+          </div>
+        </section>
+
+        {/* ── FEATURES BAR (clonado de tienda-atelier) ─────────── */}
+        <section className="max-w-7xl mx-auto px-6 py-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            {[
+              { title: 'Envío a todo el país', desc: 'En compras que superen el monto mínimo. Entrega rápida y segura a todo el país.' },
+              { title: 'Compra Segura', desc: 'Garantizamos una experiencia de compra segura de principio a fin.' },
+              { title: 'Atención al cliente', desc: 'Estamos disponibles para ayudarte en todo momento por WhatsApp e email.' },
+            ].map((feat, i) => (
+              <div key={i} className="flex gap-4 items-start">
+                <div className="w-11 h-11 bg-[#F5F5F5] flex-shrink-0" />
+                <div>
+                  <h3 className="font-bold text-sm text-[var(--color-charcoal)] mb-1.5">{feat.title}</h3>
+                  <p className="text-xs leading-relaxed text-[#E07B39]">{feat.desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 
