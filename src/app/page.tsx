@@ -70,8 +70,9 @@ export default async function HomePage() {
       <main>
 
         {/* ── HERO CON VIDEO ──────────────────────────────────────── */}
-        {/* Proporciones del Figma de Axis: lienzo 1728×1117, columna izquierda 611px (35.36%), video 1117×1117 (64.64% × 100%) */}
-        <section className="relative bg-[var(--color-cream)] flex flex-col lg:grid lg:grid-cols-[35.36%_64.64%] lg:grid-rows-1 lg:aspect-[1728/1117]">
+        {/* Proporciones exactas del Figma de Axis: lienzo 1728×1117 en 3 columnas — */}
+        {/* izquierda 426px (24.65%) + video 1117px (64.64%) + derecha 185px (10.71%) con el "SS2027" */}
+        <section className="relative bg-[var(--color-cream)] flex flex-col lg:grid lg:grid-cols-[24.65%_64.64%_10.71%] lg:grid-rows-1 lg:aspect-[1728/1117]">
 
             {/* Columna izquierda — el grid la estira al 100% de la fila */}
             <div className="order-2 lg:order-1 w-full px-8 py-12 lg:px-10 lg:py-16 lg:h-full">
@@ -164,6 +165,16 @@ export default async function HomePage() {
                   )
                 })()}
               </div>
+            </div>
+
+            {/* Columna derecha — franja angosta decorativa con la temporada en vertical (185/1728 = 10.71%) */}
+            <div className="order-3 hidden lg:flex w-full h-full items-center justify-center overflow-hidden">
+              <span
+                className="font-display text-5xl font-light tracking-[0.1em] text-[var(--color-charcoal)]/25 select-none opacity-0 animate-fade-in delay-300"
+                style={{ writingMode: 'vertical-rl' }}
+              >
+                {(config as any)?.hero_season || 'SS2027'}
+              </span>
             </div>
 
         </section>
