@@ -180,7 +180,7 @@ export default async function HomePage() {
         </section>
 
         {/* ── FEATURES BAR (clonado de tienda-atelier) ─────────── */}
-        <section className="max-w-7xl mx-auto px-6 pt-24 pb-16">
+        <section className="max-w-7xl mx-auto px-6 pt-28 pb-16">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {[
               { title: 'Envío a todo el país', desc: 'En compras que superen el monto mínimo. Entrega rápida y segura a todo el país.' },
