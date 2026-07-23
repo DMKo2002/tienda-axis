@@ -156,7 +156,7 @@ export default function Navbar({ storeName = 'TIENDA', logoUrl, instagramUrl, fa
           onMouseLeave={close}
         >
           <div className="max-w-7xl mx-auto px-6 py-10">
-            <div className="flex gap-12">
+            <div className="grid grid-cols-5 gap-x-10 gap-y-8">
               {/* "Ver todo" como primer columna */}
               <div className="flex flex-col gap-2 min-w-[120px]">
                 <Link
