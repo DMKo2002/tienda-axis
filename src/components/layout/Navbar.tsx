@@ -151,12 +151,12 @@ export default function Navbar({ storeName = 'TIENDA', logoUrl, instagramUrl, fa
               ? 'opacity-100 translate-y-0 pointer-events-auto'
               : 'opacity-0 -translate-y-2 pointer-events-none'
           }`}
-          style={{ backgroundColor: '#e5e7eb' }}
+          style={{ background: 'linear-gradient(to bottom, rgba(229,231,235,1) 0%, rgba(229,231,235,0.2) 100%)' }}
           onMouseEnter={cancelClose}
           onMouseLeave={close}
         >
           <div className="max-w-7xl mx-auto px-6 py-10">
-            <div className="grid grid-cols-5 gap-x-10 gap-y-8">
+            <div className="grid grid-cols-5 gap-x-8 gap-y-2">
               {/* "Ver todo" como primer columna */}
               <div className="flex flex-col gap-2 min-w-[120px]">
                 <Link
