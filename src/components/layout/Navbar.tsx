@@ -151,7 +151,7 @@ export default function Navbar({ storeName = 'TIENDA', logoUrl, instagramUrl, fa
               ? 'opacity-100 translate-y-0 pointer-events-auto'
               : 'opacity-0 -translate-y-2 pointer-events-none'
           }`}
-          style={{ background: 'linear-gradient(to bottom, rgba(229,231,235,1) 0%, rgba(229,231,235,0.2) 100%)' }}
+          style={{ background: 'linear-gradient(to bottom, rgba(229,231,235,1) 0%, rgba(229,231,235,0.4) 100%)' }}
           onMouseEnter={cancelClose}
           onMouseLeave={close}
         >
