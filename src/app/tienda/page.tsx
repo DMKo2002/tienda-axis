@@ -278,19 +278,6 @@ export default async function TiendaPage({ searchParams }: Props) {
 
       <main className="pt-28">
 
-        {/* Header de la sección */}
-        <div className="max-w-[1880px] mx-auto px-6 pb-8 border-b border-[var(--color-border)]">
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="text-xs tracking-[0.2em] uppercase text-[var(--color-stone)] mb-1">Colección</p>
-              <h1 className="font-display text-5xl font-light text-[var(--color-charcoal)]">Tienda</h1>
-            </div>
-            <p className="text-sm text-[var(--color-stone)] font-light pb-1">
-              {products.length} {products.length === 1 ? 'producto' : 'productos'}
-            </p>
-          </div>
-        </div>
-
         <div className="max-w-[1880px] mx-auto px-6 py-8">
           <div className="flex flex-col md:flex-row gap-8">
 
