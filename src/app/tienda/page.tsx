@@ -54,26 +54,9 @@ export default async function TiendaPage({ searchParams }: Props) {
   // Fetch all active products — we'll sort/filter with JS for price and discount
   let query = supabase
     .from('products')
-    .select('id, name, slug, category_id, product_images(*), variants(color, color_hex, size, price_rules(type, price, compare_at_price, active, min_qty))')
+    .select('id, name, slug, category_id, product_categories(category_id), product_images(*), variants(color, color_hex, size, price_rules(type, price, compare_at_price, active, min_qty))')
     .eq('tenant_id', TENANT_ID())
     .eq('active', true)
-
-  // Filter by category (includes subcategories when a top-level cat is selected)
-  if (searchParams.cat) {
-    const matchedCat = (allCategories ?? []).find((c: any) => c.slug === searchParams.cat)
-    if (matchedCat) {
-      const subIds = (allCategories ?? [])
-        .filter((c: any) => c.parent_id === matchedCat.id)
-        .map((c: any) => c.id)
-      const subSubIds = (allCategories ?? [])
-        .filter((c: any) => subIds.includes(c.parent_id))
-        .map((c: any) => c.id)
-      const ids = [matchedCat.id, ...subIds, ...subSubIds]
-      query = ids.length === 1
-        ? query.eq('category_id', ids[0])
-        : query.in('category_id', ids)
-    }
-  }
 
   // Filter by name/search
   if (searchParams.q) {
@@ -123,6 +106,27 @@ export default async function TiendaPage({ searchParams }: Props) {
 
     return { ...product, retailPrice, retailCompareAt, wholesalePrice, colors, sizes, cover, images }
   })
+
+  // Filter by category (incluye subcategorías cuando se elige una categoría madre).
+  // Un producto puede tener varias categorías (tabla puente product_categories) —
+  // aparece si CUALQUIERA de sus categorías (o la principal, category_id, para
+  // productos viejos sin fila todavía en la tabla puente) matchea.
+  if (searchParams.cat) {
+    const matchedCat = (allCategories ?? []).find((c: any) => c.slug === searchParams.cat)
+    if (matchedCat) {
+      const subIds = (allCategories ?? [])
+        .filter((c: any) => c.parent_id === matchedCat.id)
+        .map((c: any) => c.id)
+      const subSubIds = (allCategories ?? [])
+        .filter((c: any) => subIds.includes(c.parent_id))
+        .map((c: any) => c.id)
+      const ids = new Set([matchedCat.id, ...subIds, ...subSubIds])
+      products = products.filter((p: any) => {
+        const productCatIds = (p.product_categories ?? []).map((pc: any) => pc.category_id)
+        return (p.category_id && ids.has(p.category_id)) || productCatIds.some((cid: string) => ids.has(cid))
+      })
+    }
+  }
 
   // Filter by color
   if (searchParams.color) {
