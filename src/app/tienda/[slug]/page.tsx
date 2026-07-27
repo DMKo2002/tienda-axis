@@ -5,6 +5,9 @@ import Footer from '@/components/layout/Footer'
 import AddToCartButton from '@/components/shop/AddToCartButton'
 import ProductGallery from '@/components/shop/ProductGallery'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 interface Props {
   params: { slug: string }
 }
