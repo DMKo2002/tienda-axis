@@ -1,4 +1,4 @@
 {
-  "installCommand": "rm -rf node_modules/@creart/tienda-core && npm install",
+  "installCommand": "bash scripts/vercel-install.sh",
   "buildCommand": "rm -rf .next/cache && next build"
 }
