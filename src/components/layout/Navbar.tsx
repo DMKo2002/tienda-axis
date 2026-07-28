@@ -128,6 +128,9 @@ export default function Navbar({ storeName = 'TIENDA', logoUrl, instagramUrl, fa
 
           {/* Mobile hamburger */}
           <div className="flex lg:hidden items-center gap-4 ml-auto">
+            <Link href="/cuenta" title="Mi cuenta">
+              <IconUserMono />
+            </Link>
             <Link href="/carrito" className="relative">
               <IconCartMono />
               {count > 0 && (
