@@ -8,7 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
-    "@creart/tienda-core": "git+https://github.com/DMKo2002/tienda-core.git#8535784357e577a2e4f3b73569e8289ae6f2ee5d",
+    "@creart/tienda-core": "git+https://github.com/DMKo2002/tienda-core.git#07735c4339820c9d2ebd612e43cb6ef88cde5d5f",
     "@supabase/ssr": "^0.5.1",
     "@supabase/supabase-js": "^2.45.4",
     "@upstash/ratelimit": "^2.0.8",

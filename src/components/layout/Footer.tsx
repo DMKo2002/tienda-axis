@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface Branch {
   name: string
@@ -72,11 +73,9 @@ export default function Footer({
           <div className="md:col-span-1">
             {logoUrl ? (
               <a href="https://www.gounuri.com" target="_blank" rel="noopener noreferrer" className="inline-block mb-4">
-                <img
-                  src={logoUrl}
-                  alt={storeName}
-                  className="max-h-20 w-auto object-contain"
-                />
+                <span className="relative block h-20 w-40">
+                  <Image src={logoUrl} alt={storeName} fill sizes="160px" className="object-contain object-left" />
+                </span>
               </a>
             ) : (
               <p className="font-display text-2xl font-light tracking-[0.2em] uppercase text-[var(--color-charcoal)] mb-4">
