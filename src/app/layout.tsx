@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { CartProvider } from '@/components/shop/CartContext'
 import CookieBanner from '@/components/layout/CookieBanner'
+import NoImageDownload from '@/components/layout/NoImageDownload'
 import { createServerSupabase, TENANT_ID } from '@/lib/supabase-server'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -51,6 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <CartProvider>
           {children}
           <CookieBanner />
+          <NoImageDownload />
         </CartProvider>
         </body>
     </html>
