@@ -234,7 +234,7 @@ export default async function ProductoPage({ params }: Props) {
               {product.description && (
                 <div>
                   <p className="text-xs tracking-[0.15em] uppercase text-[var(--color-stone)] mb-3">Descripción</p>
-                  <p className="text-sm text-[var(--color-stone)] leading-relaxed font-light">
+                  <p className="text-sm text-[var(--color-stone)] leading-relaxed font-light whitespace-pre-line">
                     {product.description}
                   </p>
                 </div>
