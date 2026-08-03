@@ -1,4 +1,5 @@
 import { createServerSupabase, TENANT_ID } from '@/lib/supabase-server'
+import { getStoreData } from '@creart/tienda-core/store-data'
 import { notFound } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -63,12 +64,7 @@ const formatPrice = (n: number) =>
 export default async function ProductoPage({ params }: Props) {
   const supabase = await createServerSupabase()
 
-  const { data: tenant } = await supabase.from('tenants').select('name').eq('id', TENANT_ID()).single()
-  const { data: config } = await supabase
-    .from('store_config')
-    .select('logo_url, whatsapp_number, notification_email, price_visibility, ignore_stock, min_qty_per_variant, interest_free_installments, variant_column_type, variant_row_label, variant_column_label')
-    .eq('tenant_id', TENANT_ID())
-    .single()
+  const { tenant, config } = await getStoreData(supabase, TENANT_ID())
 
   const { data: product } = await supabase
     .from('products')

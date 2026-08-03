@@ -3,6 +3,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { CheckCircle } from 'lucide-react'
 import { createServerSupabase, TENANT_ID } from '@/lib/supabase-server'
+import { getStoreData } from '@creart/tienda-core/store-data'
 
 export default async function CheckoutExitoPage({
   searchParams,
@@ -19,8 +20,7 @@ export default async function CheckoutExitoPage({
   // La confirmación real de pago vive exclusivamente en el webhook de MP
   // (server-to-server, verificado contra la API de MercadoPago).
 
-  const { data: tenant } = await supabase.from('tenants').select('name').eq('id', TENANT_ID()).single()
-  const { data: config } = await supabase.from('store_config').select('logo_url, whatsapp_number, notification_email').eq('tenant_id', TENANT_ID()).single()
+  const { tenant, config } = await getStoreData(supabase, TENANT_ID())
 
   return (
     <>

@@ -1,4 +1,5 @@
 import { createServerSupabase, createServiceSupabase, TENANT_ID } from '@/lib/supabase-server'
+import { getStoreData } from '@creart/tienda-core/store-data'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import ProductCard from '@/components/shop/ProductCard'
@@ -23,8 +24,7 @@ export const metadata = { title: 'Tienda' }
 export default async function TiendaPage({ searchParams }: Props) {
   const supabase = await createServerSupabase()
 
-  const { data: tenant } = await supabase.from('tenants').select('name').eq('id', TENANT_ID()).single()
-  const { data: config } = await supabase.from('store_config').select('logo_url, whatsapp_number, notification_email, instagram_url, facebook_url, tiktok_url, pickup_address, branches, pickup_enabled, price_visibility').eq('tenant_id', TENANT_ID()).single()
+  const { tenant, config } = await getStoreData(supabase, TENANT_ID())
   // Fetch all active categories (top-level + subcategories)
   const { data: allCategories } = await supabase
     .from('categories')
