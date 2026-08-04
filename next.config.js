@@ -14,6 +14,16 @@ const nextConfig = {
   async headers() {
     return [{ source: '/(.*)', headers: securityHeaders }]
   },
+  // El sitio viejo (Hostinger) redirigía "/" a "/eshop" con un 301, y los
+  // navegadores cachean ese redirect por mucho más tiempo que el DNS. Cualquiera
+  // que haya visitado el sitio viejo puede seguir cayendo en /eshop desde su
+  // propio navegador — acá lo mandamos de vuelta a la home en vez de dar 404.
+  async redirects() {
+    return [
+      { source: '/eshop', destination: '/', permanent: true },
+      { source: '/eshop/:path*', destination: '/', permanent: true },
+    ]
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/v1/object/public/**' },
