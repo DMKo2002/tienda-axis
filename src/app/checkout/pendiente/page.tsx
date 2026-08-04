@@ -3,6 +3,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { Clock, Copy } from 'lucide-react'
 import { createServerSupabase, TENANT_ID } from '@/lib/supabase-server'
+import { getStoreData } from '@creart/tienda-core/store-data'
 
 export default async function CheckoutPendientePage({
   searchParams,
@@ -12,12 +13,7 @@ export default async function CheckoutPendientePage({
   const supabase = await createServerSupabase()
   const orderId = searchParams.order_id
 
-  const { data: tenant } = await supabase.from('tenants').select('name').eq('id', TENANT_ID()).single()
-  const { data: config } = await supabase
-    .from('store_config')
-    .select('logo_url, whatsapp_number, notification_email, transfer_cbu, transfer_alias')
-    .eq('tenant_id', TENANT_ID())
-    .single()
+  const { tenant, config } = await getStoreData(supabase, TENANT_ID())
 
   const { data: order } = orderId
     ? await supabase.from('orders').select('total').eq('id', orderId).single()

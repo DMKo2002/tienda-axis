@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createServerSupabase, TENANT_ID } from '@/lib/supabase-server'
+import { getStoreData } from '@creart/tienda-core/store-data'
 import Link from 'next/link'
 import LogoutButton from '@/components/cuenta/LogoutButton'
 import Navbar from '@/components/layout/Navbar'
@@ -29,9 +30,8 @@ export default async function CuentaPage() {
 
   // auth_user_id identifica a la persona logueada — el id propio del customer
   // (usado como customer_id en orders) puede ser distinto por tienda.
-  const [{ data: config }, { data: tenant }, { data: customer }] = await Promise.all([
-    supabase.from('store_config').select('logo_url, whatsapp_number, notification_email').eq('tenant_id', TENANT_ID()).single(),
-    supabase.from('tenants').select('name').eq('id', TENANT_ID()).single(),
+  const [{ tenant, config }, { data: customer }] = await Promise.all([
+    getStoreData(supabase, TENANT_ID()),
     supabase.from('customers').select('*').eq('auth_user_id', user!.id).eq('tenant_id', TENANT_ID()).maybeSingle(),
   ])
 

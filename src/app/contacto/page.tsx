@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { createClient, TENANT_ID } from '@/lib/supabase'
+import { getStoreData } from '@creart/tienda-core/store-data'
 
 function IconInstagram({ size = 22 }: { size?: number }) {
   return (
@@ -40,12 +41,7 @@ export default function ContactPage() {
 
   useEffect(() => {
     async function load() {
-      const [{ data: tenant }, { data: config }] = await Promise.all([
-        supabase.from('tenants').select('name').eq('id', TENANT_ID()).single(),
-        supabase.from('store_config')
-          .select('logo_url, whatsapp_number, notification_email, instagram_url, facebook_url, branches')
-          .eq('tenant_id', TENANT_ID()).single(),
-      ])
+      const { tenant, config } = await getStoreData(supabase, TENANT_ID())
       setStoreName(tenant?.name ?? 'TIENDA')
       setLogoUrl(config?.logo_url ?? null)
       setWhatsapp(config?.whatsapp_number ?? '')
