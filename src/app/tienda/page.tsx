@@ -1,6 +1,7 @@
 import { createServerSupabase, createServiceSupabase, TENANT_ID } from '@/lib/supabase-server'
 import { getStoreData } from '@creart/tienda-core/store-data'
 import Navbar from '@/components/layout/Navbar'
+import MinOrderBanner from '@/components/layout/MinOrderBanner'
 import Footer from '@/components/layout/Footer'
 import ProductCard from '@/components/shop/ProductCard'
 import CatalogFilters from '@/components/shop/CatalogFilters'
@@ -274,6 +275,7 @@ export default async function TiendaPage({ searchParams }: Props) {
 
   return (
     <>
+      <MinOrderBanner />
       <Navbar storeName={storeName} logoUrl={config?.logo_url} />
 
       <main className="pt-28">
