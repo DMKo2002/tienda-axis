@@ -64,8 +64,9 @@ export default async function TiendaPage({ searchParams }: Props) {
     query = query.ilike('name', `%${searchParams.q}%`)
   }
 
-  // Always fetch newest first (price ordering done in JS below)
-  query = query.order('created_at', { ascending: false })
+  // Orden por defecto: el manual del tenant (drag & drop en Panel Admin).
+  // Precio/nombre se re-ordena en JS más abajo si el cliente elige otro orden.
+  query = query.order('sort_order', { ascending: true }).order('created_at', { ascending: false })
 
   const { data: allProducts } = await query
 
