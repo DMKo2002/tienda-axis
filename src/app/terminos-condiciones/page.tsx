@@ -42,6 +42,7 @@ export default async function TermsPage() {
         facebookUrl={config?.facebook_url ?? undefined}
         tiktokUrl={config?.tiktok_url ?? undefined}
         branches={(config as any)?.branches ?? []}
+        pickupAddress={(config as any)?.pickup_address ?? undefined}
       />
     </>
   )

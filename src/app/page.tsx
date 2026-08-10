@@ -350,6 +350,7 @@ export default async function HomePage() {
         facebookUrl={(config as any)?.facebook_url ?? undefined}
         tiktokUrl={(config as any)?.tiktok_url ?? undefined}
         branches={(config as any)?.branches ?? []}
+        pickupAddress={(config as any)?.pickup_address ?? undefined}
       />
     </>
   )
