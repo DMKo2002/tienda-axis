@@ -67,7 +67,7 @@ export default async function CheckoutExitoPage({
           </div>
         </div>
       </main>
-      <Footer storeName={tenant?.name} whatsapp={config?.whatsapp_number ?? ''} email={config?.notification_email ?? ''} />
+      <Footer storeName={tenant?.name} whatsapp={config?.whatsapp_number ?? ''} email={config?.notification_email ?? ''} pickupAddress={config?.pickup_address ?? undefined} />
     </>
   )
 }
