@@ -214,7 +214,7 @@ export default async function HomePage() {
           <ScrollReveal className="relative aspect-[3/4] lg:aspect-auto overflow-hidden bg-[#E3E0DA] img-hover-zoom">
             {asset('gallery_1') && (
               <Image
-                src={asset('gallery_1')!.split('?')[0]}
+                src={asset('gallery_1')!}
                 alt=""
                 fill
                 className="object-cover"
@@ -226,7 +226,7 @@ export default async function HomePage() {
             <ScrollReveal delay={100} className="relative flex-1 aspect-[3/2] lg:aspect-auto overflow-hidden bg-[#A4A49C] img-hover-zoom">
               {asset('gallery_2') && (
                 <Image
-                  src={asset('gallery_2')!.split('?')[0]}
+                  src={asset('gallery_2')!}
                   alt=""
                   fill
                   className="object-cover"
@@ -238,7 +238,7 @@ export default async function HomePage() {
               <ScrollReveal delay={200} className="relative flex-1 aspect-[3/4] lg:aspect-auto overflow-hidden bg-[#C3C2BB] img-hover-zoom">
                 {asset('gallery_3') && (
                   <Image
-                    src={asset('gallery_3')!.split('?')[0]}
+                    src={asset('gallery_3')!}
                     alt=""
                     fill
                     className="object-cover"
@@ -249,7 +249,7 @@ export default async function HomePage() {
               <ScrollReveal delay={300} className="relative flex-1 aspect-[3/4] lg:aspect-auto overflow-hidden bg-[#E3E0DA] img-hover-zoom">
                 {asset('gallery_4') && (
                   <Image
-                    src={asset('gallery_4')!.split('?')[0]}
+                    src={asset('gallery_4')!}
                     alt=""
                     fill
                     className="object-cover"
@@ -285,7 +285,7 @@ export default async function HomePage() {
           <ScrollReveal className="relative w-full aspect-[1728/200] overflow-hidden bg-[#A4A49C] img-hover-zoom">
             {asset('moodboard_banner') && (
               <Image
-                src={asset('moodboard_banner')!.split('?')[0]}
+                src={asset('moodboard_banner')!}
                 alt=""
                 fill
                 className="object-cover"
@@ -301,7 +301,7 @@ export default async function HomePage() {
             <ScrollReveal delay={100} className="relative aspect-[860/573] overflow-hidden bg-[#C3C2BB] img-hover-zoom">
               {asset('moodboard_left') && (
                 <Image
-                  src={asset('moodboard_left')!.split('?')[0]}
+                  src={asset('moodboard_left')!}
                   alt=""
                   fill
                   className="object-cover"
@@ -312,7 +312,7 @@ export default async function HomePage() {
             <ScrollReveal delay={200} className="relative aspect-[860/573] overflow-hidden bg-[#E3E0DA] img-hover-zoom">
               {asset('moodboard_right') && (
                 <Image
-                  src={asset('moodboard_right')!.split('?')[0]}
+                  src={asset('moodboard_right')!}
                   alt=""
                   fill
                   className="object-cover"
