@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+const { withBotId } = require('botid/next/config')
 
 const securityHeaders = [
   // X-Frame-Options omitido intencionalmente: estos storefronts se embeben
@@ -32,4 +33,4 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+module.exports = withBotId(nextConfig)
