@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import AddToCartButton from '@/components/shop/AddToCartButton'
+import ProductAttributes from '@/components/shop/ProductAttributes'
 import ProductGallery from '@/components/shop/ProductGallery'
 
 export const dynamic = 'force-dynamic'
@@ -219,8 +220,8 @@ export default async function ProductoPage({ params }: Props) {
                 interestFreeInstallments={(config as any)?.interest_free_installments ?? null}
                 minQty={(product as any).min_qty ?? (config as any)?.min_qty_per_variant ?? 1}
                 columnType={(config as any)?.variant_column_type === 'text' ? 'text' : 'color'}
-                rowLabel={(config as any)?.variant_row_label ?? ''}
-                columnLabel={(config as any)?.variant_column_label ?? ''}
+                rowLabel={(product as any)?.row_label || (config as any)?.variant_row_label || ''}
+                columnLabel={(product as any)?.column_label || (config as any)?.variant_column_label || ''}
               />
 
               {/* Separador */}
@@ -235,6 +236,11 @@ export default async function ProductoPage({ params }: Props) {
                   </p>
                 </div>
               )}
+
+              <ProductAttributes
+                attributes={(pricedVariants[0] as any)?.attributes}
+                attrConfig={(config as any)?.variant_attributes ?? []}
+              />
 
               {/* WhatsApp */}
               {config?.whatsapp_number && (
