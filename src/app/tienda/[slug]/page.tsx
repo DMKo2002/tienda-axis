@@ -246,7 +246,7 @@ export default async function ProductoPage({ params }: Props) {
         </div>
       </main>
 
-      <Footer storeName={storeName} logoUrl={config?.logo_url ?? undefined} whatsapp={config?.whatsapp_number ?? ''} email={config?.notification_email ?? ''} pickupAddress={config?.pickup_address ?? undefined} />
+      <Footer storeName={storeName} logoUrl={config?.logo_url ?? undefined} whatsapp={config?.whatsapp_number ?? ''} email={config?.contact_email ?? ''} pickupAddress={config?.pickup_address ?? undefined} />
     </>
   )
 }

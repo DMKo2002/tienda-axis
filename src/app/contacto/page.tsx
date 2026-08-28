@@ -46,7 +46,7 @@ export default function ContactPage() {
       setStoreName(tenant?.name ?? 'TIENDA')
       setLogoUrl(config?.logo_url ?? null)
       setWhatsapp(config?.whatsapp_number ?? '')
-      setEmail(config?.notification_email ?? '')
+      setEmail(config?.contact_email ?? '')
       setInstagram((config as any)?.instagram_url ?? '')
       setFacebook((config as any)?.facebook_url ?? '')
       setBranches((config as any)?.branches ?? [])

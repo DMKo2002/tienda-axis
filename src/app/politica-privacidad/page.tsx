@@ -34,7 +34,7 @@ export default async function PrivacyPage() {
         storeName={storeName}
         logoUrl={config?.logo_url ?? undefined}
         whatsapp={config?.whatsapp_number ?? ''}
-        email={config?.notification_email ?? ''}
+        email={config?.contact_email ?? ''}
         instagramUrl={config?.instagram_url ?? undefined}
         facebookUrl={config?.facebook_url ?? undefined}
         tiktokUrl={config?.tiktok_url ?? undefined}

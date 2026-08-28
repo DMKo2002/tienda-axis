@@ -160,7 +160,7 @@ export default async function CuentaPage() {
 
         </div>
       </main>
-      <Footer storeName={storeName} whatsapp={config?.whatsapp_number ?? ''} email={config?.notification_email ?? ''} pickupAddress={config?.pickup_address ?? undefined} />
+      <Footer storeName={storeName} whatsapp={config?.whatsapp_number ?? ''} email={config?.contact_email ?? ''} pickupAddress={config?.pickup_address ?? undefined} />
     </>
   )
 }

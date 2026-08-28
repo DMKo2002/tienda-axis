@@ -345,7 +345,7 @@ export default async function HomePage() {
         storeName={storeName}
         logoUrl={asset('logo') ?? config?.logo_url ?? undefined}
         whatsapp={config?.whatsapp_number ?? ''}
-        email={config?.notification_email ?? ''}
+        email={config?.contact_email ?? ''}
         instagramUrl={(config as any)?.instagram_url ?? undefined}
         facebookUrl={(config as any)?.facebook_url ?? undefined}
         tiktokUrl={(config as any)?.tiktok_url ?? undefined}
