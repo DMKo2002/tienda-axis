@@ -64,7 +64,8 @@ export default function Footer({
   pickupAddress,
 }: FooterProps) {
   const hasSocial = instagramUrl || facebookUrl || tiktokUrl || whatsapp
-  const hasBranches = branches && branches.length > 0
+  const validBranches = (branches ?? []).filter((b) => b.name?.trim() || b.address?.trim() || b.phone?.trim())
+  const hasBranches = validBranches.length > 0
 
   return (
     <footer className="bg-white border-t border-[var(--color-border)]">
@@ -131,7 +132,7 @@ export default function Footer({
               <>
                 <p className="text-xs tracking-[0.15em] uppercase text-[var(--color-charcoal)] mb-5">Sucursales</p>
                 <ul className="space-y-4">
-                  {branches.map((b, i) => (
+                  {validBranches.map((b, i) => (
                     <li key={i} className="text-xs text-[var(--color-stone)] leading-relaxed">
                       {b.name && <p className="text-[var(--color-charcoal)] font-medium mb-0.5">{b.name}</p>}
                       {b.address && <p>{b.address}</p>}
