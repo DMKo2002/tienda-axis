@@ -352,6 +352,7 @@ export default async function HomePage() {
         branches={(config as any)?.branches ?? []}
         pickupAddress={(config as any)?.pickup_address ?? undefined}
         consumerDefenseEnabled={Boolean((config as any)?.consumer_defense_enabled)}
+        hasSellerInfo={Boolean((config as any)?.seller_legal_name || (config as any)?.seller_cuit || (config as any)?.seller_legal_address)}
       />
     </>
   )

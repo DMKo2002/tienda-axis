@@ -18,6 +18,7 @@ interface FooterProps {
   branches?: Branch[]
   pickupAddress?: string
   consumerDefenseEnabled?: boolean
+  hasSellerInfo?: boolean
 }
 
 function IconInstagram() {
@@ -64,11 +65,12 @@ export default function Footer({
   branches = [],
   pickupAddress,
   consumerDefenseEnabled = false,
+  hasSellerInfo = false,
 }: FooterProps) {
   const hasSocial = instagramUrl || facebookUrl || tiktokUrl || whatsapp
   const validBranches = (branches ?? []).filter((b) => b.name?.trim() || b.address?.trim() || b.phone?.trim())
   const hasBranches = validBranches.length > 0
-  const hasLegalLinks = consumerDefenseEnabled
+  const hasLegalLinks = consumerDefenseEnabled || hasSellerInfo
 
   return (
     <footer className="bg-white border-t border-[var(--color-border)]">
@@ -179,6 +181,9 @@ export default function Footer({
             <div>
               <p className="text-xs tracking-[0.15em] uppercase text-[var(--color-charcoal)] mb-5">Legales</p>
               <ul className="space-y-3 text-xs text-[var(--color-stone)]">
+                {hasSellerInfo && (
+                  <li><Link href="/empresa" className="hover:text-[var(--color-charcoal)] transition-colors">Empresa</Link></li>
+                )}
                 {consumerDefenseEnabled && (
                   <li><a href="https://www.argentina.gob.ar/servicio/iniciar-un-reclamo-ante-defensa-del-consumidor" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--color-charcoal)] transition-colors">Defensa del Consumidor</a></li>
                 )}
