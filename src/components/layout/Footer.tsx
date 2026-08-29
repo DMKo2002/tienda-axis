@@ -117,7 +117,7 @@ export default function Footer({
             )}
           </div>
 
-          <div className="flex flex-col sm:flex-row flex-wrap gap-x-10 gap-y-8 md:ml-auto">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-x-20 gap-y-8 md:ml-auto">
 
           {/* Links tienda */}
           <div>
