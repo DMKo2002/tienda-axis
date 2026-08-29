@@ -371,6 +371,7 @@ export default async function TiendaPage({ searchParams }: Props) {
         tiktokUrl={config?.tiktok_url ?? undefined}
         branches={(config as any)?.branches ?? []}
         pickupAddress={(config as any)?.pickup_address ?? undefined}
+        consumerDefenseEnabled={Boolean((config as any)?.consumer_defense_enabled)}
       />
     </>
   )

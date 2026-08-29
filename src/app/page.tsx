@@ -351,6 +351,7 @@ export default async function HomePage() {
         tiktokUrl={(config as any)?.tiktok_url ?? undefined}
         branches={(config as any)?.branches ?? []}
         pickupAddress={(config as any)?.pickup_address ?? undefined}
+        consumerDefenseEnabled={Boolean((config as any)?.consumer_defense_enabled)}
       />
     </>
   )
