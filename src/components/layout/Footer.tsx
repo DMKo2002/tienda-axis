@@ -202,6 +202,7 @@ export default function Footer({
             &copy; {new Date().getFullYear()} {storeName}
           </p>
           <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2">
+            <a href="/arrepentimiento" className="text-[10px] tracking-widest uppercase text-[var(--color-stone)] hover:text-[var(--color-charcoal)] transition-colors">Botón de Arrepentimiento</a>
             <a href="/politica-privacidad" className="text-[10px] tracking-widest uppercase text-[var(--color-stone)] hover:text-[var(--color-charcoal)] transition-colors">Privacidad</a>
             <a href="/politica-cookies" className="text-[10px] tracking-widest uppercase text-[var(--color-stone)] hover:text-[var(--color-charcoal)] transition-colors">Cookies</a>
             <a href="/terminos-condiciones" className="text-[10px] tracking-widest uppercase text-[var(--color-stone)] hover:text-[var(--color-charcoal)] transition-colors">Términos</a>
