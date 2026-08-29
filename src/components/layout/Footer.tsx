@@ -75,10 +75,10 @@ export default function Footer({
   return (
     <footer className="bg-white border-t border-[var(--color-border)]">
       <div className="max-w-7xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-12">
+        <div className="flex flex-col md:flex-row md:flex-wrap md:items-start gap-10">
 
           {/* Marca + social */}
-          <div className="md:col-span-1">
+          <div className="md:flex-shrink-0">
             {logoUrl ? (
               <a href="https://www.gounuri.com" target="_blank" rel="noopener noreferrer" className="inline-block mb-4">
                 <span className="relative block h-20 w-40">
@@ -116,6 +116,8 @@ export default function Footer({
               </div>
             )}
           </div>
+
+          <div className="flex flex-col sm:flex-row flex-wrap gap-x-10 gap-y-8 md:ml-auto">
 
           {/* Links tienda */}
           <div>
@@ -190,6 +192,8 @@ export default function Footer({
               </ul>
             </div>
           )}
+
+          </div>
 
         </div>
 
