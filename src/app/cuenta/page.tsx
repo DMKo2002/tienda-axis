@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createServerSupabase, TENANT_ID } from '@/lib/supabase-server'
 import { getStoreData } from '@creart/tienda-core/store-data'
@@ -5,6 +6,10 @@ import Link from 'next/link'
 import LogoutButton from '@/components/cuenta/LogoutButton'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+
+// Pantalla privada de cuenta (requiere login) -- sin sentido indexarla,
+// no es contenido publico que alguien deba encontrar buscando en Google.
+export const metadata: Metadata = { title: 'Mi Cuenta', robots: { index: false, follow: false } }
 
 const formatPrice = (n: number) =>
   new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)

@@ -1,9 +1,13 @@
+import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { createServerSupabase, TENANT_ID } from '@/lib/supabase-server'
 import { getStoreData } from '@creart/tienda-core/store-data'
 
 // Siempre SSR fresco — sin esto Next.js cachea la página y los cambios del panel no se ven
 export const dynamic = 'force-dynamic'
+// Autorreferencia -- sin esto la home no declaraba ningun canonical (ver
+// diagnostico de indexacion, 2026-09-08/09).
+export const metadata: Metadata = { alternates: { canonical: '/' } }
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import ScrollReveal from '@/components/layout/ScrollReveal'
