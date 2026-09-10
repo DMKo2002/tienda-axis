@@ -1,7 +1,5 @@
 import { createServerSupabase, TENANT_ID } from '@/lib/supabase-server'
 import { getStoreData } from '@creart/tienda-core/store-data'
-import { buildProductJsonLd } from '@creart/tienda-core/seo'
-import JsonLd from '@creart/tienda-core/JsonLd'
 import { notFound } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -139,16 +137,8 @@ export default async function ProductoPage({ params }: Props) {
 
   const coverImage = images[0]?.url ?? null
   const retailPrice = retailRule?.price
-  const jsonLd = buildProductJsonLd(
-    { name: product.name, description: product.description, slug: product.slug, sku: (product as any).sku },
-    storeName,
-    retailPrice,
-    coverImage
-  )
-
   return (
     <>
-      <JsonLd data={jsonLd} />
       <Navbar storeName={storeName} logoUrl={config?.logo_url} />
 
       <main className="pt-24 min-h-screen">
