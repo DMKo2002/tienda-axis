@@ -8,7 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
-    "@creart/tienda-core": "github:DMKo2002/tienda-core#9e7adf03e5c6bdd2c5c486382f9bc7c452a95ece",
+    "@creart/tienda-core": "github:DMKo2002/tienda-core#1b3828fc8ddeff82fa4cab32a3eb15c43149a2e7",
     "botid": "^1.5.11",
     "@supabase/ssr": "^0.5.1",
     "@supabase/supabase-js": "^2.45.4",
