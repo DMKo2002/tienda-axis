@@ -7,7 +7,7 @@ export const metadata = { title: 'Términos y Condiciones', robots: { index: fal
 
 export default async function TermsPage() {
   const supabase = await createServerSupabase()
-  const { tenant, config } = await getStoreData(supabase, TENANT_ID())
+  const { tenant, config } = await getStoreData(supabase, await TENANT_ID())
   const storeName = tenant?.name ?? 'TIENDA'
   const text = (config as any)?.terms_and_conditions
 

@@ -7,7 +7,7 @@ export const metadata = { title: 'Política de Cookies', robots: { index: false,
 
 export default async function CookiesPage() {
   const supabase = await createServerSupabase()
-  const { tenant, config } = await getStoreData(supabase, TENANT_ID())
+  const { tenant, config } = await getStoreData(supabase, await TENANT_ID())
   const storeName = tenant?.name ?? 'TIENDA'
   const text = (config as any)?.cookies_policy
 

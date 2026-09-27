@@ -8,12 +8,12 @@ import { getStoreData } from '@creart/tienda-core/store-data'
 export default async function CheckoutPendientePage({
   searchParams,
 }: {
-  searchParams: { order_id?: string }
+  searchParams: Promise<{ order_id?: string }>
 }) {
   const supabase = await createServerSupabase()
-  const orderId = searchParams.order_id
+  const { order_id: orderId } = await searchParams
 
-  const { tenant, config } = await getStoreData(supabase, TENANT_ID())
+  const { tenant, config } = await getStoreData(supabase, await TENANT_ID())
 
   const { data: order } = orderId
     ? await supabase.from('orders').select('total').eq('id', orderId).single()

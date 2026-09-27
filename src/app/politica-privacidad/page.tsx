@@ -7,7 +7,7 @@ export const metadata = { title: 'Política de Privacidad', robots: { index: fal
 
 export default async function PrivacyPage() {
   const supabase = await createServerSupabase()
-  const { tenant, config } = await getStoreData(supabase, TENANT_ID())
+  const { tenant, config } = await getStoreData(supabase, await TENANT_ID())
   const storeName = tenant?.name ?? 'TIENDA'
   const text = (config as any)?.privacy_policy
 

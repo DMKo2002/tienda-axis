@@ -36,8 +36,8 @@ export default async function CuentaPage() {
   // auth_user_id identifica a la persona logueada — el id propio del customer
   // (usado como customer_id en orders) puede ser distinto por tienda.
   const [{ tenant, config }, { data: customer }] = await Promise.all([
-    getStoreData(supabase, TENANT_ID()),
-    supabase.from('customers').select('*').eq('auth_user_id', user!.id).eq('tenant_id', TENANT_ID()).maybeSingle(),
+    getStoreData(supabase, await TENANT_ID()),
+    supabase.from('customers').select('*').eq('auth_user_id', user!.id).eq('tenant_id', await TENANT_ID()).maybeSingle(),
   ])
 
   const { data: orders } = customer

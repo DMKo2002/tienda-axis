@@ -8,10 +8,10 @@ import { getStoreData } from '@creart/tienda-core/store-data'
 export default async function CheckoutExitoPage({
   searchParams,
 }: {
-  searchParams: { order_id?: string }
+  searchParams: Promise<{ order_id?: string }>
 }) {
   const supabase = await createServerSupabase()
-  const orderId = searchParams.order_id
+  const { order_id: orderId } = await searchParams
 
   // IMPORTANTE: esta página NO debe marcar el pedido como pagado. Es una
   // página pública sin autenticación — cualquiera que tenga el order_id
@@ -20,7 +20,7 @@ export default async function CheckoutExitoPage({
   // La confirmación real de pago vive exclusivamente en el webhook de MP
   // (server-to-server, verificado contra la API de MercadoPago).
 
-  const { tenant, config } = await getStoreData(supabase, TENANT_ID())
+  const { tenant, config } = await getStoreData(supabase, await TENANT_ID())
 
   return (
     <>

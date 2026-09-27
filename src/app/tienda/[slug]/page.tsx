@@ -12,18 +12,19 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 interface Props {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 export async function generateMetadata({ params }: Props) {
+  const { slug } = await params
   const supabase = await createServerSupabase()
   const [{ data: tenantData }, { data }] = await Promise.all([
-    supabase.from('tenants').select('name').eq('id', TENANT_ID()).single(),
+    supabase.from('tenants').select('name').eq('id', await TENANT_ID()).single(),
     supabase
       .from('products')
       .select('name, description, product_images(url, is_cover, sort_order)')
-      .eq('tenant_id', TENANT_ID())
-      .eq('slug', params.slug)
+      .eq('tenant_id', await TENANT_ID())
+      .eq('slug', slug)
       .eq('active', true)
       .single(),
   ])
@@ -45,7 +46,7 @@ export async function generateMetadata({ params }: Props) {
   return {
     title,
     description,
-    alternates: { canonical: `/tienda/${params.slug}` },
+    alternates: { canonical: `/tienda/${slug}` },
     openGraph: {
       title,
       description,
@@ -65,15 +66,16 @@ const formatPrice = (n: number) =>
   new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
 
 export default async function ProductoPage({ params }: Props) {
+  const { slug } = await params
   const supabase = await createServerSupabase()
 
-  const { tenant, config } = await getStoreData(supabase, TENANT_ID())
+  const { tenant, config } = await getStoreData(supabase, await TENANT_ID())
 
   const { data: product } = await supabase
     .from('products')
     .select('*, product_images(*), variants(*, price_rules(*))')
-    .eq('tenant_id', TENANT_ID())
-    .eq('slug', params.slug)
+    .eq('tenant_id', await TENANT_ID())
+    .eq('slug', slug)
     .eq('active', true)
     .single()
 
@@ -90,6 +92,12 @@ export default async function ProductoPage({ params }: Props) {
   const priceVisibility = (config as any)?.price_visibility ?? 'all'
   const ignoreStock = Boolean((config as any)?.ignore_stock)
   let showPrices = priceVisibility === 'all'
+  // Controla si se busca/muestra el precio mayorista (independiente de
+  // showPrices, que solo dice si se muestra ALGUN precio) - alineado con
+  // mono/atelier: sin tier retail separado en los datos de precio, se trata
+  // como mayorista por defecto cuando el tenant es 'all'.
+  let isWholesaleUser = priceVisibility === 'all'
+  const isRetailUser = false
   if (priceVisibility !== 'all') {
     try {
       const { data: sessionData } = await supabase.auth.getSession()
@@ -105,21 +113,15 @@ export default async function ProductoPage({ params }: Props) {
             .from('customers')
             .select('type')
             .eq('auth_user_id', user.id)
-            .eq('tenant_id', TENANT_ID())
+            .eq('tenant_id', await TENANT_ID())
             .single()
           showPrices = customer?.type === 'wholesale'
+          isWholesaleUser = customer?.type === 'wholesale'
         }
       }
     } catch { showPrices = false }
   }
 
-  // Este template nunca rastreó el tipo de cliente por separado: mostraba el
-  // precio mayorista a cualquiera que pudiera ver precios. Se deriva de la
-  // config de visibilidad para alinearlo con los demás templates — el precio
-  // mayorista pasa a verse solo cuando la tienda está configurada como
-  // mayorista y el cliente efectivamente pasó ese filtro.
-  const isWholesaleUser = showPrices && priceVisibility === 'wholesale_only'
-  const isRetailUser = false
 
   // Agrupar variantes por talle y color
   // Una variante sin ningún price_rule activo con precio > 0 no es una opción
@@ -185,6 +187,7 @@ export default async function ProductoPage({ params }: Props) {
                   colors={colors as string[]}
                   showPrices={showPrices}
                   ignoreStock={ignoreStock}
+                  isWholesale={isWholesaleUser}
                   interestFreeInstallments={(config as any)?.interest_free_installments ?? null}
                   minQty={(product as any).min_qty ?? (config as any)?.min_qty_per_variant ?? 1}
                   columnType={(config as any)?.variant_column_type === 'text' ? 'text' : 'color'}
