@@ -26,6 +26,8 @@ const nextConfig = {
     ]
   },
   images: {
+    // Next 16 solo permite los quality listados acá (default [75]); sin esto quality={90} se ignora.
+    qualities: [75, 90],
     remotePatterns: [
       { protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/v1/object/public/**' },
       { protocol: 'https', hostname: '*' },

@@ -134,9 +134,14 @@ export default async function HomePage() {
                     playsInline
                   />
                 ) : (appearance as any)?.hero_image_url && (
-                  <div
-                    className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
-                    style={{ backgroundImage: `url(${(appearance as any).hero_image_url})` }}
+                  <Image
+                    src={(appearance as any).hero_image_url}
+                    alt=""
+                    fill
+                    priority
+                    quality={90}
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
                   />
                 )}
                 {(appearance as any)?.hero_image_url && (
